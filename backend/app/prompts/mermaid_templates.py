@@ -1,11 +1,43 @@
 MERMAID_RULES = """
-## Mermaid Diagram Rules (MUST follow):
-- Use valid Mermaid syntax that renders correctly
-- For flowcharts: use `flowchart TD` (top-down) or `flowchart LR` (left-right)
-- For class diagrams: use `classDiagram`
-- For sequence diagrams: use `sequenceDiagram`
-- Node IDs must be alphanumeric (no spaces, no special chars). Use labels for display: `A["My Label"]`
-- Keep diagrams readable: max ~20 nodes per diagram. Split complex systems into multiple diagrams.
-- Use subgraph for grouping related nodes
-- Wrap each diagram in ```mermaid code fences
+## Mermaid 图表规则 (严格遵守，否则图表无法渲染):
+
+### 语法规范
+- flowchart 必须使用 `flowchart TD` 或 `flowchart LR` 开头
+- classDiagram 必须使用 `classDiagram` 开头
+- sequenceDiagram 必须使用 `sequenceDiagram` 开头
+
+### 节点 ID 规则
+- 节点 ID 只能使用英文字母、数字和下划线，禁止使用中文、连字符、空格
+- 正确: `A1`, `nodeStart`, `user_input`
+- 错误: `node-1`, `用户输入`, `my node`
+
+### 标签规则
+- 标签必须用双引号包裹: `A1["用户输入"]`
+- 方括号节点: `A1["标签文字"]`
+- 圆角节点: `A1("标签文字")`
+- 菱形判断: `A1{"判断条件"}`
+- 体育场形: `A1(["标签文字"])`
+- 标签中禁止使用 `<br/>`, `<br>` 等 HTML 标签，用空格或分号代替换行
+- 标签中禁止使用特殊字符: `&`, `<`, `>`, `#`, `{`, `}` (在标签文字内)
+- 如需展示多行，使用多个节点而非 HTML 换行
+
+### 连线规则
+- 使用 `-->` 表示有向连线
+- 带标签连线: `A1 -->|"标签"| B1`
+- 标签文字也需要用双引号包裹
+
+### subgraph 规则
+- `subgraph title["显示标题"]`
+- 必须有 `end` 结尾
+
+### 示例 (正确语法):
+```mermaid
+flowchart TD
+    A1["用户请求"] --> B1["API 网关"]
+    B1 --> C1{"鉴权检查"}
+    C1 -->|"通过"| D1["业务处理"]
+    C1 -->|"拒绝"| E1["返回 401"]
+    D1 --> F1["数据库查询"]
+    F1 --> G1["返回结果"]
+```
 """
