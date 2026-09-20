@@ -31,3 +31,13 @@ Thumbs.db
 # logs
 *.log
 logs/
+
+# python
+__pycache__/
+*.pyc
+venv/
+*.db
+
+# runtime data
+backend/cloned_repos/
+backend/uploads/
