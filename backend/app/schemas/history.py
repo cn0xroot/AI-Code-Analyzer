@@ -11,6 +11,7 @@ class HistoryItem(BaseModel):
     status: str
     ai_provider: str
     ai_model: str
+    language: Optional[str] = "zh"
     created_at: datetime
     completed_at: Optional[datetime] = None
 
