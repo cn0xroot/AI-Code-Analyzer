@@ -1,0 +1,33 @@
+# npm dependencies
+node_modules/
+npm-debug.log
+npm-error.log
+.npm
+
+# lock files (optional - uncomment if you want to ignore)
+# package-lock.json
+# yarn.lock
+
+# dist and build
+dist/
+build/
+
+# environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# logs
+*.log
+logs/

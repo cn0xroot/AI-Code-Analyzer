@@ -1,36 +1,38 @@
 # AI Code Analyzer
 
-基于 AI 大模型的代码分析系统，自动生成项目功能概述、技术栈分析、架构设计、实现原理，并输出 Mermaid 可视化图表（架构图、流程图、类图、时序图等）。支持实时流式 AI 输出与 Markdown 预览。
+An intelligent code analysis system powered by AI large language models that automatically generates project summaries, tech stack analysis, architecture design, implementation principles, and produces Mermaid visualizations (architecture diagrams, flowcharts, class diagrams, sequence diagrams, etc.). Supports real-time streaming AI output with Markdown preview.
 
-## 功能特性
+**Languages:** [English](README.md) | [中文](README.zh-CN.md)
 
-- **多平台代码获取**: GitHub、GitLab、Gitee 在线仓库克隆（支持实时进度、网速显示），本地代码上传（文件/zip）
-- **多语言解析**: Python、Java、JavaScript、TypeScript、Go、PHP、C#、C/C++、Swift、Kotlin（基于 tree-sitter AST 解析）
-- **多 AI 模型**: OpenAI、Anthropic (Claude)、通义千问、OpenAI 兼容中转站
-- **多维度深度分析**:
-  - **项目概览** — 项目功能、技术栈、架构设计、实现原理 + 架构图/业务流程图/依赖图/技术栈图
-  - **功能分析** — 文件功能、类与函数分析、设计模式 + 类图/调用关系图
-  - **逻辑流程** — 执行逻辑、关键实现细节 + 逻辑流程图/时序图
-  - **全量分析** — 以上全部
-- **实时 AI 输出**: SSE 流式推送 AI 生成内容，Markdown 实时渲染预览，Mermaid 图表自动渲染
-- **多主题配色**: 7 套主题（暗夜/海洋/森林/暮色/玫瑰/Nord/浅色），源自 AI_Web_Search 项目
-- **分析历史**: SQLite 持久化存储，支持查看结果、重新分析、删除记录
-- **容错机制**: 任务超时检测、服务器重启自动恢复僵尸任务、轮询失败重试
+## Features
 
-## 技术栈
+- **Multi-Platform Code Acquisition**: Clone from GitHub, GitLab, Gitee (with real-time progress and speed display), local code upload (files/zip)
+- **Multi-Language Parsing**: Python, Java, JavaScript, TypeScript, Go, PHP, C#, C/C++, Swift, Kotlin (powered by tree-sitter AST parsing)
+- **Multiple AI Providers**: OpenAI, Anthropic (Claude), Alibaba Qwen, OpenAI-compatible services
+- **Multi-Dimensional Deep Analysis**:
+  - **Project Overview** — Project purpose, tech stack, architecture design, implementation principles + architecture/business process/dependency/tech stack diagrams
+  - **Function Analysis** — File functions, class & function analysis, design patterns + class/call relationship diagrams
+  - **Logic Flow** — Execution logic, key implementation details + flow/sequence diagrams
+  - **Full Analysis** — All of the above
+- **Real-Time AI Streaming**: SSE streaming of AI-generated content with live Markdown rendering and automatic Mermaid diagram rendering
+- **Multiple Themes**: 7 themes (Dark/Ocean/Forest/Sunset/Rose/Nord/Light) from AI_Web_Search project
+- **Analysis History**: SQLite persistence with support for viewing results, re-analysis, and record deletion
+- **Fault Tolerance**: Task timeout detection, automatic zombie task recovery on server restart, polling with retry
 
-| 层级 | 技术 |
-|------|------|
-| 后端 | Python 3 + FastAPI + SQLAlchemy + SQLite |
-| 前端 | Vue 3 + Vite + Element Plus + Pinia |
-| 代码解析 | tree-sitter + tree-sitter-language-pack (305+ 语言) |
-| AI 集成 | OpenAI SDK + Anthropic SDK（流式输出） |
-| 图表渲染 | Mermaid.js + marked (Markdown) + highlight.js |
-| 实时通信 | SSE (Server-Sent Events) |
+## Technology Stack
 
-## 快速开始
+| Layer | Technologies |
+|-------|--------------|
+| Backend | Python 3 + FastAPI + SQLAlchemy + SQLite |
+| Frontend | Vue 3 + Vite + Element Plus + Pinia |
+| Code Parsing | tree-sitter + tree-sitter-language-pack (305+ languages) |
+| AI Integration | OpenAI SDK + Anthropic SDK (streaming support) |
+| Visualization | Mermaid.js + marked (Markdown) + highlight.js |
+| Real-Time | SSE (Server-Sent Events) |
 
-### 1. 安装后端依赖
+## Quick Start
+
+### 1. Install Backend Dependencies
 
 ```bash
 cd backend
@@ -39,19 +41,19 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. 配置环境变量
+### 2. Configure Environment Variables
 
 ```bash
 cp .env.example .env
 ```
 
-编辑 `.env` 文件，如需代理访问 GitHub：
+Edit `.env` file. If you need a proxy for GitHub access:
 
 ```env
 GIT_PROXY=http://127.0.0.1:7897
 ```
 
-### 3. 启动后端
+### 3. Start Backend
 
 ```bash
 cd backend
@@ -62,13 +64,13 @@ uvicorn app.main:app --reload --port 8000 \
   --reload-exclude "*.db"
 ```
 
-> 注意：必须使用 `--reload-exclude` 排除克隆目录，否则克隆代码会触发服务器重启导致分析任务中断。
+> **Note**: You must use `--reload-exclude` to exclude cloned directories, otherwise cloned code will trigger server restart and interrupt analysis tasks.
 
-后端启动后可访问：
-- API 文档: http://localhost:8000/docs
-- 生产前端 (需先构建): http://localhost:8000
+After backend starts, you can access:
+- API Documentation: http://localhost:8000/docs
+- Frontend (after build): http://localhost:8000
 
-### 4. 安装并启动前端
+### 4. Install and Start Frontend
 
 ```bash
 cd frontend
@@ -76,149 +78,199 @@ npm install
 npm run dev
 ```
 
-前端开发服务器运行在 http://localhost:3000，自动代理 `/api` 请求到后端。
+Frontend dev server runs at http://localhost:3000 and automatically proxies `/api` requests to backend.
 
-### 5. 构建生产前端（可选）
+### 5. Build Production Frontend (Optional)
 
 ```bash
 cd frontend
 ./node_modules/.bin/vite build
 ```
 
-构建后可直接通过后端 http://localhost:8000 访问完整应用。
+After building, access the complete application at http://localhost:8000.
 
-### 6. 使用流程
+### 6. Usage Workflow
 
-1. 打开浏览器访问 http://localhost:3000（开发）或 http://localhost:8000（生产）
-2. 进入「模型配置」页面，添加 AI 模型（填写 API Key、选择提供商和模型 ID）
-3. 进入「代码分析」页面，输入 Git 仓库 URL 或上传本地代码
-4. 选择 AI 模型和分析类型，点击「开始分析」
-5. 实时查看 AI 输出的 Markdown 分析内容和 Mermaid 图表
-6. 分析完成后查看结构化结果，支持导出 SVG
+1. Open browser and navigate to http://localhost:3000 (dev) or http://localhost:8000 (production)
+2. Go to "Model Configuration" page and add AI models (fill API Key, select provider and model ID)
+3. Go to "Code Analysis" page, enter Git repository URL or upload local code
+4. Select AI model and analysis type, click "Start Analysis"
+5. View real-time AI output with Markdown content and Mermaid diagrams
+6. After completion, view structured results with SVG export support
 
-## 项目结构
+## Project Structure
 
 ```
-Code_AI_ant/
+AI-Code-Analyzer/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py                 # FastAPI 入口 + SPA 静态文件服务 + 僵尸任务清理
-│   │   ├── config.py               # 配置管理 (含 GIT_PROXY)
-│   │   ├── database.py             # SQLite 引擎和会话
+│   │   ├── main.py                 # FastAPI entry + SPA static files + zombie task cleanup
+│   │   ├── config.py               # Configuration management (includes GIT_PROXY)
+│   │   ├── database.py             # SQLite engine and session
 │   │   ├── api/endpoints/
-│   │   │   ├── analysis.py         # 分析任务 + SSE 流式输出 + 超时检测
-│   │   │   ├── repos.py            # 仓库克隆 (SSE 进度) / 上传
-│   │   │   ├── models_config.py    # AI 模型配置 CRUD
-│   │   │   └── history.py          # 分析历史
-│   │   ├── models/                 # ORM 模型 (Project, AnalysisTask, AIModelConfig)
-│   │   ├── schemas/                # Pydantic 请求/响应模型
+│   │   │   ├── analysis.py         # Analysis tasks + SSE streaming + timeout detection
+│   │   │   ├── repos.py            # Repo cloning (SSE progress) / upload
+│   │   │   ├── models_config.py    # AI model config CRUD
+│   │   │   └── history.py          # Analysis history
+│   │   ├── models/                 # ORM models (Project, AnalysisTask, AIModelConfig)
+│   │   ├── schemas/                # Pydantic request/response models
 │   │   ├── services/
-│   │   │   ├── analysis_service.py # 分析编排 + 流式 AI 调用 + 内存进度
-│   │   │   ├── code_fetcher.py     # Git 克隆 (代理/进度/网速) + 文件上传
-│   │   │   ├── code_parser.py      # tree-sitter 多语言 AST 解析
-│   │   │   ├── ai_analyzer.py      # AI Provider 工厂 (含流式)
-│   │   │   ├── mermaid_generator.py# AI 响应 Mermaid 解析
-│   │   │   └── providers/          # OpenAI / Anthropic / 通义 / 中转站
-│   │   └── prompts/                # AI 提示词模板 (概览/功能/逻辑流程)
+│   │   │   ├── analysis_service.py # Analysis orchestration + streaming AI calls + memory progress
+│   │   │   ├── code_fetcher.py     # Git cloning (proxy/progress/speed) + file upload
+│   │   │   ├── code_parser.py      # tree-sitter multi-language AST parsing
+│   │   │   ├── ai_analyzer.py      # AI Provider factory (streaming support)
+│   │   │   ├── mermaid_generator.py# Mermaid parsing from AI responses
+│   │   │   └── providers/          # OpenAI / Anthropic / Qwen / Compat providers
+│   │   └── prompts/                # AI prompt templates (overview/functions/logic flow)
 │   ├── requirements.txt
 │   ├── .env.example
-│   └── .env                        # 本地配置 (不入版本控制)
+│   └── .env                        # Local config (not in version control)
 ├── frontend/
 │   ├── src/
 │   │   ├── views/
-│   │   │   ├── HomePage.vue        # 首页
-│   │   │   ├── AnalysisConfig.vue  # 分析配置 (克隆/上传 + 模型选择)
-│   │   │   ├── AnalysisResult.vue  # 结果页 (实时 Markdown 预览 + Mermaid)
-│   │   │   ├── HistoryPage.vue     # 历史记录 (含重新分析)
-│   │   │   └── SettingsPage.vue    # AI 模型配置
+│   │   │   ├── HomePage.vue        # Home page
+│   │   │   ├── AnalysisConfig.vue  # Analysis config (clone/upload + model selection)
+│   │   │   ├── AnalysisResult.vue  # Results page (live Markdown preview + Mermaid)
+│   │   │   ├── HistoryPage.vue     # History (with re-analysis)
+│   │   │   └── SettingsPage.vue    # AI model configuration
 │   │   ├── components/
-│   │   │   ├── AppHeader.vue       # 导航 + 7 主题切换
-│   │   │   ├── MermaidDiagram.vue  # Mermaid 图表渲染
-│   │   │   ├── RepoInput.vue       # 仓库克隆 (SSE 实时进度/网速)
-│   │   │   ├── FileUploader.vue    # 文件上传
-│   │   │   ├── ModelSelector.vue   # AI 模型选择器
-│   │   │   ├── AnalysisProgress.vue# 分析进度 (步骤条)
-│   │   │   ├── DiagramTabs.vue     # 结果标签页
-│   │   │   └── CodeViewer.vue      # 代码高亮
-│   │   ├── api/                    # Axios + fetch API 封装
-│   │   ├── stores/                 # Pinia 状态管理 (含 sessionStorage 持久化)
+│   │   │   ├── AppHeader.vue       # Navigation + 7 theme switcher
+│   │   │   ├── MermaidDiagram.vue  # Mermaid diagram rendering
+│   │   │   ├── RepoInput.vue       # Repo cloning (SSE real-time progress/speed)
+│   │   │   ├── FileUploader.vue    # File upload
+│   │   │   ├── ModelSelector.vue   # AI model selector
+│   │   │   ├── AnalysisProgress.vue# Analysis progress (step indicator)
+│   │   │   ├── DiagramTabs.vue     # Result tabs
+│   │   │   └── CodeViewer.vue      # Code highlighting
+│   │   ├── api/                    # Axios + fetch API wrapper
+│   │   ├── stores/                 # Pinia state management (with sessionStorage persistence)
 │   │   ├── router/                 # Vue Router
-│   │   └── styles/main.css         # 7 套主题 CSS 变量 + Element Plus 覆写
+│   │   └── styles/main.css         # 7 themes CSS variables + Element Plus overrides
 │   ├── package.json
 │   └── vite.config.js
 └── README.md
 ```
 
-## API 端点
+## API Endpoints
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | /api/v1/repos/clone | 克隆远程 Git 仓库 |
-| POST | /api/v1/repos/clone/stream | 克隆仓库 (SSE 实时进度/网速) |
-| POST | /api/v1/repos/upload | 上传本地代码文件 |
-| POST | /api/v1/analysis/ | 创建分析任务 (后台执行) |
-| GET | /api/v1/analysis/{id} | 获取完整分析结果 |
-| GET | /api/v1/analysis/{id}/status | 查询任务状态 |
-| GET | /api/v1/analysis/{id}/stream | SSE 流式 AI 输出 |
-| GET | /api/v1/models/ | 列出 AI 模型配置 |
-| POST | /api/v1/models/ | 添加 AI 模型配置 |
-| PUT | /api/v1/models/{id} | 更新 AI 模型配置 |
-| DELETE | /api/v1/models/{id} | 删除 AI 模型配置 |
-| GET | /api/v1/history/ | 分析历史（分页） |
-| DELETE | /api/v1/history/{id} | 删除历史记录 |
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | /api/v1/repos/clone | Clone remote Git repository |
+| POST | /api/v1/repos/clone/stream | Clone repository (SSE real-time progress/speed) |
+| POST | /api/v1/repos/upload | Upload local code files |
+| POST | /api/v1/analysis/ | Create analysis task (background execution) |
+| GET | /api/v1/analysis/{id} | Get complete analysis results |
+| GET | /api/v1/analysis/{id}/status | Query task status |
+| GET | /api/v1/analysis/{id}/stream | SSE streaming AI output |
+| GET | /api/v1/models/ | List AI model configurations |
+| POST | /api/v1/models/ | Add AI model configuration |
+| PUT | /api/v1/models/{id} | Update AI model configuration |
+| DELETE | /api/v1/models/{id} | Delete AI model configuration |
+| GET | /api/v1/history/ | Analysis history (paginated) |
+| DELETE | /api/v1/history/{id} | Delete history record |
 
-## 配置说明
+## Configuration
 
-后端配置通过 `.env` 文件管理，参考 `backend/.env.example`：
+Backend configuration is managed through `.env` file. See `backend/.env.example`:
 
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| DATABASE_URL | 数据库连接 | sqlite:///./code_analyzer.db |
-| UPLOAD_DIR | 上传文件目录 | ./uploads |
-| CLONE_DIR | 克隆仓库目录 | ./cloned_repos |
-| MAX_UPLOAD_SIZE_MB | 最大上传大小 | 50 |
-| MAX_FILE_SIZE_KB | 单文件解析上限 | 500 |
-| GIT_PROXY | Git 代理地址 | 无 (直连) |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| DATABASE_URL | Database connection string | sqlite:///./code_analyzer.db |
+| UPLOAD_DIR | Upload directory | ./uploads |
+| CLONE_DIR | Clone directory | ./cloned_repos |
+| MAX_UPLOAD_SIZE_MB | Max upload size | 50 |
+| MAX_FILE_SIZE_KB | Max file size for parsing | 500 |
+| GIT_PROXY | Git proxy address | None (direct connection) |
 
-## 支持的 AI 提供商
+## Supported AI Providers
 
-| 提供商 | provider 值 | 说明 |
-|--------|-------------|------|
-| OpenAI | openai | GPT-4o 等模型，支持流式输出 |
-| Anthropic | anthropic | Claude 系列模型，支持流式输出 |
-| 通义千问 | tongyi | 阿里云 DashScope OpenAI 兼容 API |
-| OpenAI 兼容 | openai_compat | 中转站/第三方兼容接口，需填写 Base URL |
+| Provider | provider value | Description |
+|----------|----------------|-------------|
+| OpenAI | openai | GPT-4o models with streaming support |
+| Anthropic | anthropic | Claude models with streaming support |
+| Alibaba Qwen | tongyi | Alibaba DashScope OpenAI-compatible API |
+| OpenAI Compatible | openai_compat | Third-party compatible interfaces, requires Base URL |
 
-## 主题配色
+## Themes
 
-支持 7 套主题，通过右上角主题按钮切换：
+Supports 7 themes, switchable via the theme button in top-right corner:
 
-| 主题 | 名称 | 风格 | 主色调 |
-|------|------|------|--------|
-| midnight | 暗夜 | 深色 | 靛蓝 #6366f1 |
-| ocean | 海洋 | 深色 | 青蓝 #0ea5e9 |
-| forest | 森林 | 深色 | 翠绿 #22c55e |
-| sunset | 暮色 | 深色 | 橙色 #f97316 |
-| rose | 玫瑰 | 深色 | 粉红 #ec4899 |
-| nord | Nord | 深色 | 冰蓝 #88c0d0 |
-| light | 浅色 | 亮色 | 靛蓝 #6366f1 |
+| Theme | Name | Style | Color |
+|-------|------|-------|-------|
+| midnight | Dark Night | Dark | Indigo #6366f1 |
+| ocean | Ocean | Dark | Cyan #0ea5e9 |
+| forest | Forest | Dark | Green #22c55e |
+| sunset | Sunset | Dark | Orange #f97316 |
+| rose | Rose | Dark | Pink #ec4899 |
+| nord | Nord | Dark | Ice Blue #88c0d0 |
+| light | Light | Light | Indigo #6366f1 |
 
-## 分析维度说明
+## Analysis Dimensions
 
-### 项目概览
-- 项目功能概述（做什么、解决什么问题、核心功能）
-- 技术栈分析（前端/后端/数据库/工具链分类）
-- 架构设计（架构模式、模块职责、协作方式）
-- 实现原理与核心流程（数据流转、关键算法）
-- 输出图表：架构图、核心业务流程图、模块依赖图、技术栈组成图
+### Project Overview
+- Project purpose (what it does, problems it solves, core features)
+- Tech stack analysis (frontend/backend/database/toolchain classification)
+- Architecture design (patterns, module responsibilities, collaboration)
+- Implementation principles and core flow (data flow, key algorithms)
+- Generated diagrams: architecture, business flow, module dependency, tech stack diagrams
 
-### 功能分析
-- 文件功能说明与角色定位
-- 类与函数逐一分析
-- 设计模式识别
-- 输出图表：类图、函数调用关系图
+### Function Analysis
+- File purpose and role
+- Class and function analysis
+- Design pattern recognition
+- Generated diagrams: class diagrams, function call relationships
 
-### 逻辑流程
-- 执行逻辑逐步描述
-- 关键实现细节与边界情况
-- 输出图表：逻辑流程图、时序图
+### Logic Flow
+- Step-by-step execution logic
+- Key implementation details and edge cases
+- Generated diagrams: logic flow diagrams, sequence diagrams
+
+### Full Analysis
+- Combines all analysis dimensions above
+
+## Development
+
+### Backend Development
+
+```bash
+cd backend
+source venv/bin/activate
+# Make changes to app code
+uvicorn app.main:app --reload --port 8000 \
+  --reload-exclude "cloned_repos/*" \
+  --reload-exclude "uploads/*" \
+  --reload-exclude "*.db"
+```
+
+### Frontend Development
+
+```bash
+cd frontend
+npm run dev
+```
+
+Access dev server at http://localhost:3000
+
+### Building for Production
+
+```bash
+# Build frontend
+cd frontend
+npm run build
+
+# Run backend in production
+cd backend
+uvicorn app.main:app --port 8000
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit issues and pull requests.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+For issues and questions, please open an issue on GitHub or check the documentation.
