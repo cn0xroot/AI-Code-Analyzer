@@ -1,9 +1,13 @@
 <template>
-  <div class="mermaid-container">
+  <div class="mermaid-card surface">
     <div class="mermaid-toolbar">
-      <el-tag size="small" type="info">{{ diagramType }}</el-tag>
-      <el-button size="small" @click="copyCode">{{ t('mermaid.copy') }}</el-button>
-      <el-button size="small" @click="downloadSvg">{{ t('mermaid.download') }}</el-button>
+      <h2 v-if="title" class="mermaid-title">{{ title }}</h2>
+      <span v-if="filePath" class="mono file-path">{{ filePath }}</span>
+      <span class="status-chip">{{ diagramType }}</span>
+      <span class="toolbar-actions">
+        <el-button size="small" text @click="copyCode"><Icon name="copy" :size="16" />{{ t('mermaid.copy') }}</el-button>
+        <el-button size="small" @click="downloadSvg"><Icon name="download" :size="16" />SVG</el-button>
+      </span>
     </div>
     <div ref="diagramRef" class="mermaid-render">
       <div v-if="renderFailed" class="mermaid-fallback">
@@ -11,7 +15,7 @@
         <pre class="mermaid-source">{{ code }}</pre>
       </div>
     </div>
-    <el-collapse v-if="!renderFailed">
+    <el-collapse v-if="!renderFailed" class="source-collapse">
       <el-collapse-item :title="t('mermaid.viewSource')">
         <pre class="mermaid-source">{{ code }}</pre>
       </el-collapse-item>
@@ -24,12 +28,15 @@ import { ref, watch, onMounted, nextTick } from 'vue'
 import mermaid from 'mermaid'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
+import Icon from './Icon.vue'
 
 const { t } = useI18n()
 
 const props = defineProps({
   code: { type: String, required: true },
   diagramType: { type: String, default: 'flowchart' },
+  title: { type: String, default: '' },
+  filePath: { type: String, default: '' },
 })
 
 const diagramRef = ref(null)
@@ -122,24 +129,31 @@ watch(() => props.code, () => nextTick(renderDiagram))
 </script>
 
 <style scoped>
-.mermaid-container {
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm, 8px);
-  padding: 16px;
-  margin: 12px 0;
-  background: var(--bg-secondary);
+.mermaid-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .mermaid-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 10px;
+  min-height: 52px;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
 }
+
+.mermaid-title { font-size: 18px; font-weight: 600; }
+.file-path { color: var(--text-muted); }
+.toolbar-actions { margin-left: auto; display: flex; gap: 6px; }
 
 .mermaid-render {
   overflow-x: auto;
   text-align: center;
+  padding: 24px;
+  background: var(--bg-primary);
 }
 
 .mermaid-render :deep(svg) {
@@ -147,9 +161,7 @@ watch(() => props.code, () => nextTick(renderDiagram))
   height: auto;
 }
 
-.mermaid-fallback {
-  text-align: left;
-}
+.mermaid-fallback { text-align: left; }
 
 .fallback-hint {
   color: var(--text-muted);
@@ -158,26 +170,16 @@ watch(() => props.code, () => nextTick(renderDiagram))
 }
 
 .mermaid-source {
-  background: var(--bg-card);
+  background: var(--bg-primary);
   color: var(--text-secondary);
-  padding: 12px;
-  border-radius: 4px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
   font-size: 13px;
   overflow-x: auto;
   white-space: pre-wrap;
 }
 
-.mermaid-error {
-  color: var(--danger, #f56c6c);
-  padding: 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-}
-
-.mermaid-error pre {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--text-muted);
-}
+.source-collapse { padding: 0 20px; }
+.source-collapse :deep(.el-collapse-item__header) { border-bottom: 0; }
+.source-collapse :deep(.el-collapse-item__wrap) { border-bottom: 0; }
 </style>

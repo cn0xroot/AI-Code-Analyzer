@@ -11,9 +11,9 @@ from app.services.code_parser import CodeParser, ProjectStructure, FileAnalysis
 from app.services.ai_analyzer import AIAnalyzer
 from app.services.mermaid_generator import MermaidGenerator
 from app.prompts import normalize_language
-from app.prompts.overview import build_system_prompt, build_overview_prompt
-from app.prompts.function_analysis import build_function_analysis_prompt
-from app.prompts.logic_flow import build_logic_flow_prompt
+from app.prompts.overview import build_system_prompt, build_overview_prompt, overview_sections
+from app.prompts.function_analysis import build_function_analysis_prompt, function_sections
+from app.prompts.logic_flow import build_logic_flow_prompt, logic_sections
 from app.prompts.mermaid_templates import MERMAID_RULES
 
 # In-memory streaming output for real-time display
@@ -141,7 +141,7 @@ class AnalysisService:
         content = await self._stream_ai(
             task.id, task.ai_config_id, system, prompt, "overview"
         )
-        sections = self.mermaid.parse_response(content)
+        sections = self.mermaid.parse_response(content, overview_sections(task.language))
 
         for section in sections:
             result = AnalysisResult(
@@ -175,7 +175,7 @@ class AnalysisService:
                 task.id, task.ai_config_id, system, prompt,
                 "function", file_analysis.file_path
             )
-            sections = self.mermaid.parse_response(content)
+            sections = self.mermaid.parse_response(content, function_sections(task.language))
 
             for section in sections:
                 result = AnalysisResult(
@@ -208,7 +208,7 @@ class AnalysisService:
                 task.id, task.ai_config_id, system, prompt,
                 "logic_flow", file_analysis.file_path
             )
-            sections = self.mermaid.parse_response(content)
+            sections = self.mermaid.parse_response(content, logic_sections(task.language))
 
             for section in sections:
                 result = AnalysisResult(

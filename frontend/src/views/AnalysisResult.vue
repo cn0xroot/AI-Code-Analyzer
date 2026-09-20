@@ -1,96 +1,131 @@
 <template>
   <div class="analysis-result">
-    <!-- In-progress: show live AI output with Markdown preview -->
+    <!-- In progress -->
     <template v-if="!task || (task.status !== 'completed' && task.status !== 'failed')">
-      <div class="live-section">
-        <div class="live-header">
-          <AnalysisProgress
-            :status="currentStatus"
-            :error-message="task?.error_message"
-          />
+      <div class="page-header">
+        <div>
+          <h1>{{ task?.project_name || t('progress.processing') }}</h1>
+          <p class="page-subtitle">{{ t('result.analysisNo', { id: route.params.taskId }) }} · {{ analysisTypeLabel }}</p>
         </div>
-        <div v-if="liveText" class="live-output">
-          <div class="live-meta">
-            <span v-if="livePhase" class="live-phase">{{ phaseLabel(livePhase) }}</span>
-            <span v-if="liveFile" class="live-file">{{ liveFile }}</span>
-            <span class="live-chars">{{ liveText.length }} {{ t('result.chars') }}</span>
+        <div class="page-actions">
+          <span class="status-chip" :class="statusClass(currentStatus)">{{ statusLabel(currentStatus) }}</span>
+        </div>
+      </div>
+
+      <AnalysisProgress :status="currentStatus" :error-message="task?.error_message" />
+
+      <div class="live-layout">
+        <div class="surface live-panel">
+          <div class="live-head">
+            <span v-if="livePhase" class="status-chip is-accent">{{ phaseLabel(livePhase) }}</span>
+            <span v-else class="status-chip">{{ t('result.live') }}</span>
+            <span v-if="liveFile" class="mono">{{ liveFile }}</span>
+            <span class="live-count mono">{{ liveText.length }} {{ t('result.chars') }} · {{ t('result.streaming') }}</span>
           </div>
-          <div class="live-markdown" ref="liveRef" v-html="renderedMarkdown"></div>
+          <div ref="liveRef" class="live-body md-body">
+            <div v-if="liveText" v-html="renderedMarkdown"></div>
+            <div v-else class="live-waiting">
+              <Icon name="loader" :size="20" class="spin" />
+              <span>{{ statusText }}</span>
+            </div>
+          </div>
         </div>
+
+        <aside class="surface task-card">
+          <span class="section-label">{{ t('result.task') }}</span>
+          <dl class="task-meta">
+            <div><dt>{{ t('common.project') }}</dt><dd>{{ task?.project_name || '-' }}</dd></div>
+            <div><dt>{{ t('common.analysisType') }}</dt><dd>{{ analysisTypeLabel }}</dd></div>
+            <div><dt>{{ t('common.aiModel') }}</dt><dd class="mono">{{ task ? `${task.ai_provider} / ${task.ai_model}` : '-' }}</dd></div>
+            <div><dt>{{ t('common.outputLanguage') }}</dt><dd>{{ task?.language === 'en' ? t('lang.en') : t('lang.zh') }}</dd></div>
+            <div><dt>{{ t('result.started') }}</dt><dd>{{ formatTime(task?.created_at) }}</dd></div>
+            <div><dt>{{ t('result.elapsed') }}</dt><dd class="mono">{{ elapsed }}</dd></div>
+          </dl>
+          <p class="task-hint">{{ t('result.leaveHint') }}</p>
+        </aside>
       </div>
     </template>
 
     <!-- Failed -->
     <template v-else-if="task.status === 'failed'">
+      <div class="page-header">
+        <div>
+          <h1>{{ task.project_name || `Project #${task.project_id}` }}</h1>
+          <p class="page-subtitle">{{ t('result.analysisNo', { id: task.id }) }} · {{ analysisTypeLabel }}</p>
+        </div>
+        <div class="page-actions">
+          <span class="status-chip is-danger">{{ statusLabel('failed') }}</span>
+        </div>
+      </div>
       <AnalysisProgress status="failed" :error-message="task.error_message" />
     </template>
 
     <!-- Completed -->
-    <template v-else-if="task.status === 'completed'">
-      <div class="result-header">
-        <h2>{{ t('result.title') }}</h2>
-        <el-descriptions :column="3" border size="small">
-          <el-descriptions-item :label="t('common.project')">{{ task.project_name || `Project #${task.project_id}` }}</el-descriptions-item>
-          <el-descriptions-item :label="t('common.analysisType')">{{ analysisTypeLabel }}</el-descriptions-item>
-          <el-descriptions-item :label="t('common.aiModel')">{{ task.ai_provider }} / {{ task.ai_model }}</el-descriptions-item>
-          <el-descriptions-item :label="t('common.createdAt')">{{ formatTime(task.created_at) }}</el-descriptions-item>
-          <el-descriptions-item :label="t('common.completedAt')">{{ formatTime(task.completed_at) }}</el-descriptions-item>
-        </el-descriptions>
-      </div>
-
-      <DiagramTabs :results="task.results" />
-
-      <!-- Chat Panel -->
-      <div class="chat-section">
-        <div class="chat-header">
-          <h3>{{ t('result.chatTitle') }}</h3>
-          <span class="chat-hint">{{ t('result.chatHint') }}</span>
+    <template v-else>
+      <div class="page-header">
+        <div>
+          <h1>{{ task.project_name || `Project #${task.project_id}` }}</h1>
+          <p class="page-subtitle">{{ t('result.analysisNo', { id: task.id }) }}</p>
         </div>
-        <div class="chat-messages" ref="chatMessagesRef">
-          <div v-if="chatMessages.length === 0" class="chat-empty">
-            <p>{{ t('result.chatEmpty') }}</p>
-            <div class="chat-suggestions">
-              <el-button
-                v-for="s in suggestions"
-                :key="s"
-                size="small"
-                @click="sendMessage(s)"
-              >{{ s }}</el-button>
-            </div>
-          </div>
-          <div
-            v-for="(msg, idx) in chatMessages"
-            :key="idx"
-            class="chat-msg"
-            :class="msg.role"
-          >
-            <div class="msg-role">{{ msg.role === 'user' ? t('result.you') : 'AI' }}</div>
-            <div class="msg-body" v-html="renderMd(msg.content)"></div>
-          </div>
-          <div v-if="chatStreaming" class="chat-msg assistant">
-            <div class="msg-role">AI</div>
-            <div class="msg-body" v-html="renderMd(chatStreamText)"></div>
-          </div>
-        </div>
-        <div class="chat-input-area">
-          <el-input
-            v-model="chatInput"
-            :placeholder="t('result.inputPlaceholder')"
-            :disabled="chatStreaming"
-            @keydown.enter.prevent="sendMessage()"
-            autosize
-            type="textarea"
-            :rows="1"
-          />
-          <el-button
-            type="primary"
-            :loading="chatStreaming"
-            :disabled="!chatInput.trim() || chatStreaming"
-            @click="sendMessage()"
-          >
-            {{ t('result.send') }}
+        <div class="page-actions">
+          <span class="status-chip is-accent">{{ statusLabel('completed') }}</span>
+          <el-button @click="$router.push('/history')">
+            <Icon name="refresh" :size="16" />{{ t('common.reanalyze') }}
           </el-button>
         </div>
+      </div>
+
+      <div class="surface meta-strip">
+        <span><span class="meta-key">{{ t('common.project') }}</span><b>{{ task.project_name || `#${task.project_id}` }}</b></span>
+        <span><span class="meta-key">{{ t('common.analysisType') }}</span><span class="status-chip">{{ analysisTypeLabel }}</span></span>
+        <span><span class="meta-key">{{ t('common.aiModel') }}</span><span class="mono">{{ task.ai_provider }} / {{ task.ai_model }}</span></span>
+        <span><span class="meta-key">{{ t('common.outputLanguage') }}</span>{{ task.language === 'en' ? t('lang.en') : t('lang.zh') }}</span>
+        <span><span class="meta-key">{{ t('common.completedAt') }}</span>{{ formatTime(task.completed_at) }}</span>
+      </div>
+
+      <div class="result-layout">
+        <ResultSections :results="task.results" />
+
+        <aside class="surface chat-panel">
+          <div class="chat-head">
+            <Icon name="chat" :size="18" />
+            <span>{{ t('result.chatTitle') }}</span>
+          </div>
+          <div ref="chatMessagesRef" class="chat-messages">
+            <div v-if="chatMessages.length === 0 && !chatStreaming" class="chat-empty">
+              <p>{{ t('result.chatEmpty') }}</p>
+            </div>
+            <div v-for="(msg, idx) in chatMessages" :key="idx" class="chat-msg" :class="msg.role">
+              <span class="msg-role">{{ msg.role === 'user' ? t('result.you') : 'AI' }}</span>
+              <div class="msg-body md-body" v-html="renderMd(msg.content)"></div>
+            </div>
+            <div v-if="chatStreaming" class="chat-msg assistant">
+              <span class="msg-role">AI</span>
+              <div class="msg-body md-body" v-html="renderMd(chatStreamText) || '…'"></div>
+            </div>
+          </div>
+          <div v-if="chatMessages.length === 0" class="chat-suggestions">
+            <button v-for="s in suggestions" :key="s" type="button" @click="sendMessage(s)">{{ s }}</button>
+          </div>
+          <form class="chat-input" @submit.prevent="sendMessage()">
+            <el-input
+              v-model="chatInput"
+              :placeholder="t('result.inputPlaceholder')"
+              :disabled="chatStreaming"
+              @keydown.enter.prevent="sendMessage()"
+            />
+            <el-button
+              type="primary"
+              class="send-btn"
+              :aria-label="t('result.send')"
+              :loading="chatStreaming"
+              :disabled="!chatInput.trim() || chatStreaming"
+              native-type="submit"
+            >
+              <Icon v-if="!chatStreaming" name="send" :size="18" />
+            </el-button>
+          </form>
+        </aside>
       </div>
     </template>
   </div>
@@ -101,13 +136,15 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { marked } from 'marked'
 import mermaid from 'mermaid'
+import { useI18n } from 'vue-i18n'
 import { useAnalysisStore } from '../stores/analysis'
 import { useConfigStore } from '../stores/config'
-import { useI18n } from 'vue-i18n'
-import { aiLanguage } from '../i18n'
 import { streamAnalysis, chatWithAnalysis } from '../api/analysis'
+import { aiLanguage } from '../i18n'
+import { statusClass } from '../utils/status'
+import Icon from '../components/Icon.vue'
 import AnalysisProgress from '../components/AnalysisProgress.vue'
-import DiagramTabs from '../components/DiagramTabs.vue'
+import ResultSections from '../components/ResultSections.vue'
 
 const route = useRoute()
 const { t, te, tm, locale } = useI18n()
@@ -122,7 +159,6 @@ const liveRef = ref(null)
 let abortController = null
 let mermaidRenderTimer = null
 
-// Chat state
 const chatMessages = ref([])
 const chatInput = ref('')
 const chatStreaming = ref(false)
@@ -130,9 +166,11 @@ const chatStreamText = ref('')
 const chatMessagesRef = ref(null)
 const suggestions = computed(() => tm('result.suggestions'))
 
+const now = ref(Date.now())
+let clock = null
+
 mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' })
 
-// Configure marked for mermaid blocks
 const renderer = new marked.Renderer()
 let mermaidCounter = 0
 renderer.code = function ({ text, lang }) {
@@ -159,7 +197,6 @@ const renderedMarkdown = computed(() => {
   return renderMd(liveText.value)
 })
 
-// Render mermaid diagrams
 let lastRenderedIds = new Set()
 watch(renderedMarkdown, async () => {
   await nextTick()
@@ -185,8 +222,25 @@ async function renderMermaidBlocks() {
 
 const analysisTypeLabel = computed(() => {
   const type = task.value?.analysis_type
-  return type && te(`analysisType.${type}`) ? t(`analysisType.${type}`) : type
+  return type && te(`analysisType.${type}`) ? t(`analysisType.${type}`) : type || ''
 })
+
+const statusText = computed(() => {
+  const map = { pending: t('progress.pending'), parsing: t('progress.parsingText'), analyzing: t('progress.analyzingText') }
+  return map[currentStatus.value] || t('progress.processing')
+})
+
+const elapsed = computed(() => {
+  if (!task.value?.created_at) return '--:--'
+  const sec = Math.max(0, Math.floor((now.value - new Date(task.value.created_at).getTime()) / 1000))
+  const m = String(Math.floor(sec / 60)).padStart(2, '0')
+  const s = String(sec % 60).padStart(2, '0')
+  return `${m}:${s}`
+})
+
+function statusLabel(s) {
+  return s && te(`status.${s}`) ? t(`status.${s}`) : s
+}
 
 function formatTime(value) {
   if (!value) return '-'
@@ -197,17 +251,15 @@ function phaseLabel(p) {
   return te(`phase.${p}`) ? t(`phase.${p}`) : p
 }
 
-// Chat functions
 async function sendMessage(text) {
   const msg = text || chatInput.value.trim()
   if (!msg) return
   chatInput.value = ''
 
-  // Find AI config to use
   let aiConfigId = task.value?.ai_config_id
   if (!aiConfigId) {
     if (configStore.models.length === 0) await configStore.fetchModels()
-    const defaultModel = configStore.models.find(m => m.is_default) || configStore.models[0]
+    const defaultModel = configStore.models.find((m) => m.is_default) || configStore.models[0]
     if (!defaultModel) return
     aiConfigId = defaultModel.id
   }
@@ -272,7 +324,6 @@ function scrollChat() {
   }
 }
 
-// Analysis streaming
 async function startStreaming(taskId) {
   abortController = new AbortController()
   try {
@@ -328,6 +379,7 @@ async function startStreaming(taskId) {
 
 onMounted(async () => {
   const taskId = route.params.taskId
+  clock = setInterval(() => { now.value = Date.now() }, 1000)
   if (configStore.models.length === 0) configStore.fetchModels()
   try {
     const data = await analysisStore.fetchResult(taskId)
@@ -343,175 +395,226 @@ onMounted(async () => {
 onUnmounted(() => {
   if (abortController) abortController.abort()
   if (mermaidRenderTimer) clearTimeout(mermaidRenderTimer)
+  if (clock) clearInterval(clock)
   analysisStore.stopPolling()
 })
 </script>
 
 <style scoped>
 .analysis-result {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.result-header { margin-bottom: 24px; }
-.result-header h2 { margin-bottom: 16px; }
+.analysis-result .page-header { margin-bottom: 0; }
 
-.live-section { display: flex; flex-direction: column; gap: 20px; }
+/* Live */
+.live-layout {
+  display: flex;
+  gap: 20px;
+  align-items: stretch;
+}
 
-.live-output {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm, 8px);
+.live-panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+  min-height: 520px;
 }
 
-.live-meta {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 16px; background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color); font-size: 13px;
-}
-
-.live-phase { color: var(--accent); font-weight: 600; }
-.live-file { color: var(--text-muted); font-family: monospace; }
-.live-chars { margin-left: auto; color: var(--text-muted); font-size: 12px; font-family: monospace; }
-
-.live-markdown {
-  padding: 20px 24px; max-height: 600px; overflow-y: auto;
-  color: var(--text-primary); font-size: 14px; line-height: 1.8;
-}
-
-.live-markdown :deep(h1), .live-markdown :deep(h2), .live-markdown :deep(h3) {
-  color: var(--accent); margin: 20px 0 12px 0; padding-bottom: 6px;
-  border-bottom: 1px solid var(--border-color);
-}
-.live-markdown :deep(h1) { font-size: 20px; }
-.live-markdown :deep(h2) { font-size: 18px; }
-.live-markdown :deep(h3) { font-size: 16px; }
-.live-markdown :deep(p) { margin-bottom: 12px; }
-.live-markdown :deep(ul), .live-markdown :deep(ol) { margin: 8px 0 12px 20px; }
-.live-markdown :deep(li) { margin-bottom: 4px; }
-.live-markdown :deep(strong) { color: var(--text-primary); }
-.live-markdown :deep(code) { background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px; font-size: 13px; }
-.live-markdown :deep(pre) { background: var(--bg-secondary); padding: 12px 16px; border-radius: 8px; overflow-x: auto; margin: 12px 0; }
-.live-markdown :deep(pre code) { background: transparent; padding: 0; }
-.live-markdown :deep(.mermaid-placeholder) { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; margin: 12px 0; text-align: center; overflow-x: auto; }
-.live-markdown :deep(.mermaid-source-inline) { text-align: left; font-size: 12px; color: var(--text-muted); }
-.live-markdown :deep(.mermaid-placeholder svg) { max-width: 100%; height: auto; }
-.live-markdown :deep(table) { border-collapse: collapse; width: 100%; margin: 12px 0; }
-.live-markdown :deep(th), .live-markdown :deep(td) { border: 1px solid var(--border-color); padding: 8px 12px; text-align: left; }
-.live-markdown :deep(th) { background: var(--bg-secondary); font-weight: 600; }
-.live-markdown :deep(blockquote) { border-left: 3px solid var(--accent); padding-left: 12px; margin: 12px 0; color: var(--text-secondary); }
-
-/* ===== Chat Panel ===== */
-.chat-section {
-  margin-top: 32px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius, 12px);
-  overflow: hidden;
-}
-
-.chat-header {
+.live-head {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 20px;
+  height: 48px;
+  padding: 0 20px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
 }
 
-.chat-header h3 {
-  margin: 0;
+.live-count { margin-left: auto; font-size: 12px; color: var(--text-muted); }
+
+.live-body {
+  flex: 1;
+  padding: 24px 28px;
+  max-height: 640px;
+  overflow-y: auto;
+}
+
+.live-waiting {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+}
+
+.live-waiting .spin { color: var(--accent); }
+
+.live-body :deep(.mermaid-placeholder) {
+  margin: 12px 0;
+  padding: 16px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+}
+
+.live-body :deep(.mermaid-placeholder svg) { max-width: 100%; height: auto; }
+.live-body :deep(.mermaid-source-inline) {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+}
+
+.task-card {
+  width: 300px;
+  flex-shrink: 0;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.task-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.task-meta div { display: flex; justify-content: space-between; gap: 12px; }
+.task-meta dt { color: var(--text-muted); }
+.task-meta dd { color: var(--text-primary); text-align: right; }
+.task-meta dd.mono { color: var(--text-primary); }
+
+.task-hint {
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* Completed */
+.meta-strip {
+  display: flex;
+  gap: 28px;
+  padding: 14px 20px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.meta-strip > span { display: inline-flex; align-items: center; gap: 8px; }
+.meta-key { color: var(--text-muted); }
+.meta-strip b { color: var(--text-primary); font-weight: 600; }
+
+.result-layout {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.chat-panel {
+  width: 340px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: sticky;
+  top: 24px;
+  height: calc(100vh - 48px);
+  max-height: 800px;
+}
+
+.chat-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 52px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--border-color);
+  font-family: var(--font-display);
   font-size: 15px;
+  font-weight: 600;
+}
+
+.chat-head svg { color: var(--accent); }
+
+.chat-messages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  overflow-y: auto;
+}
+
+.chat-empty { color: var(--text-muted); font-size: 13px; line-height: 1.6; }
+
+.chat-msg { display: flex; flex-direction: column; gap: 6px; }
+.chat-msg.user { align-items: flex-end; }
+.msg-role { font-size: 11px; color: var(--text-muted); }
+
+.msg-body {
+  max-width: 92%;
+  padding: 10px 14px;
+  border-radius: 12px 12px 12px 4px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.chat-msg.user .msg-body {
+  border-radius: 12px 12px 4px 12px;
+  background: var(--accent-light);
+  border-color: var(--accent-line);
   color: var(--text-primary);
 }
 
-.chat-hint {
-  color: var(--text-muted);
-  font-size: 13px;
-}
-
-.chat-messages {
-  min-height: 120px;
-  max-height: 500px;
-  overflow-y: auto;
-  padding: 16px 20px;
-}
-
-.chat-empty {
-  text-align: center;
-  color: var(--text-muted);
-  padding: 24px 0;
-}
-
-.chat-empty p {
-  margin-bottom: 16px;
-  font-size: 14px;
-}
+.msg-body :deep(p:last-child) { margin-bottom: 0; }
 
 .chat-suggestions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  justify-content: center;
+  padding: 0 18px 12px;
 }
 
-.chat-msg {
-  margin-bottom: 16px;
-}
-
-.chat-msg.user .msg-role {
-  color: var(--accent);
-  font-weight: 600;
-}
-
-.chat-msg.assistant .msg-role {
-  color: var(--accent-secondary, var(--accent-hover));
-  font-weight: 600;
-}
-
-.msg-role {
+.chat-suggestions button {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
   font-size: 12px;
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  cursor: pointer;
 }
 
-.msg-body {
-  background: var(--bg-secondary);
-  padding: 12px 16px;
-  border-radius: var(--radius-sm, 8px);
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  font-size: 14px;
-  line-height: 1.7;
-}
+.chat-suggestions button:hover { border-color: var(--accent-line); color: var(--accent); }
 
-.chat-msg.user .msg-body {
-  background: var(--accent-light);
-  border-color: transparent;
-}
-
-.msg-body :deep(h1), .msg-body :deep(h2), .msg-body :deep(h3) {
-  color: var(--accent); margin: 12px 0 8px 0; font-size: 15px;
-}
-.msg-body :deep(p) { margin-bottom: 8px; }
-.msg-body :deep(code) { background: var(--bg-card); padding: 2px 5px; border-radius: 3px; font-size: 13px; }
-.msg-body :deep(pre) { background: var(--bg-card); padding: 10px 14px; border-radius: 6px; overflow-x: auto; margin: 8px 0; }
-.msg-body :deep(pre code) { background: transparent; }
-.msg-body :deep(ul), .msg-body :deep(ol) { margin: 6px 0 8px 18px; }
-
-.chat-input-area {
+.chat-input {
   display: flex;
-  gap: 10px;
-  padding: 14px 20px;
+  gap: 8px;
+  padding: 12px 18px 18px;
   border-top: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  align-items: flex-end;
 }
 
-.chat-input-area .el-input {
-  flex: 1;
+.send-btn {
+  width: 44px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1200px) {
+  .live-layout, .result-layout { flex-direction: column; }
+  .task-card, .chat-panel { width: 100%; position: static; height: auto; }
+  .chat-messages { max-height: 360px; }
 }
 </style>

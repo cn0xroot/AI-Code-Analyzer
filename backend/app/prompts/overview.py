@@ -153,6 +153,16 @@ flowchart TD
 
 _OVERVIEW_TEMPLATES = {"zh": _OVERVIEW_ZH, "en": _OVERVIEW_EN}
 
+OVERVIEW_SECTIONS = {
+    "zh": ["项目功能概述", "技术栈分析", "架构设计", "实现原理与核心流程", "架构图", "核心业务流程图", "模块依赖关系图", "技术栈组成图"],
+    "en": ["Project Overview", "Technology Stack", "Architecture Design", "Implementation Principles & Core Flow",
+           "Architecture Diagram", "Core Business Flow Diagram", "Module Dependency Diagram", "Technology Stack Diagram"],
+}
+
+
+def overview_sections(language: str = "zh") -> list[str]:
+    return OVERVIEW_SECTIONS[normalize_language(language)]
+
 
 def build_overview_prompt(
     project_name: str,

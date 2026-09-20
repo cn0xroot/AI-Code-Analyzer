@@ -92,6 +92,15 @@ flowchart TD
 
 _FUNCTION_TEMPLATES = {"zh": _FUNCTION_ZH, "en": _FUNCTION_EN}
 
+FUNCTION_SECTIONS = {
+    "zh": ["文件功能说明", "类与函数分析", "设计模式", "类图", "函数调用关系图"],
+    "en": ["File Purpose", "Classes & Functions", "Design Patterns", "Class Diagram", "Function Call Graph"],
+}
+
+
+def function_sections(language: str = "zh") -> list[str]:
+    return FUNCTION_SECTIONS[normalize_language(language)]
+
 
 def build_function_analysis_prompt(
     file_path: str, code_content: str, symbols_summary: str, language: str = "zh"

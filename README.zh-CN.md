@@ -190,18 +190,20 @@ Code_AI_ant/
 │   │   │   ├── HistoryPage.vue     # 历史记录 (含重新分析)
 │   │   │   └── SettingsPage.vue    # AI 模型配置
 │   │   ├── components/
-│   │   │   ├── AppHeader.vue       # 导航 + 7 主题切换
+│   │   │   ├── AppSidebar.vue      # 侧边栏导航 + 语言 + 7 主题切换
+│   │   │   ├── Icon.vue            # 内联 SVG 图标集
 │   │   │   ├── MermaidDiagram.vue  # Mermaid 图表渲染
 │   │   │   ├── RepoInput.vue       # 仓库克隆 (SSE 实时进度/网速)
 │   │   │   ├── FileUploader.vue    # 文件上传
 │   │   │   ├── ModelSelector.vue   # AI 模型选择器
 │   │   │   ├── AnalysisProgress.vue# 分析进度 (步骤条)
-│   │   │   ├── DiagramTabs.vue     # 结果标签页
+│   │   │   ├── ResultSections.vue  # 章节导航 + 结果内容
 │   │   │   └── CodeViewer.vue      # 代码高亮
 │   │   ├── api/                    # Axios + fetch API 封装
 │   │   ├── stores/                 # Pinia 状态管理 (含 sessionStorage 持久化)
+│   │   ├── i18n/                   # vue-i18n 配置 + 中英文语言包
 │   │   ├── router/                 # Vue Router
-│   │   └── styles/main.css         # 7 套主题 CSS 变量 + Element Plus 覆写
+│   │   └── styles/main.css         # 设计令牌（7 套主题）、布局基元、Element Plus 覆写
 │   ├── package.json
 │   └── vite.config.js
 └── README.md

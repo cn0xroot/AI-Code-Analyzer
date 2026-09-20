@@ -1,7 +1,7 @@
 <template>
   <el-config-provider :locale="elLocale">
     <div id="app-container" :data-theme="theme">
-      <AppHeader :theme="theme" @update:theme="setTheme" />
+      <AppSidebar :theme="theme" @update:theme="setTheme" />
       <main class="main-content">
         <router-view />
       </main>
@@ -14,7 +14,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import en from 'element-plus/es/locale/lang/en'
-import AppHeader from './components/AppHeader.vue'
+import AppSidebar from './components/AppSidebar.vue'
 
 const { locale } = useI18n()
 const elLocale = computed(() => (locale.value.startsWith('zh') ? zhCn : en))

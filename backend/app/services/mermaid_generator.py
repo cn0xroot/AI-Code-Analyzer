@@ -1,5 +1,5 @@
 import re
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 DIAGRAM_TYPES = {
     "flowchart": "flowchart",
@@ -13,16 +13,31 @@ DIAGRAM_TYPES = {
 }
 
 
-class MermaidGenerator:
-    def parse_response(self, text: str) -> List[Dict]:
-        sections = []
-        parts = re.split(r"###\s+(.+)", text)
+def _normalize_heading(text: str) -> str:
+    text = re.sub(r"[*_`#]", "", text)
+    text = re.sub(r"^\s*\d+[.、)]\s*", "", text)
+    return re.sub(r"[\s:：\-–—()（）]+", "", text).lower()
 
-        i = 1
-        while i < len(parts) - 1:
-            heading = parts[i].strip()
-            content = parts[i + 1].strip()
-            i += 2
+
+class MermaidGenerator:
+    def parse_response(self, text: str, expected_sections: Optional[List[str]] = None) -> List[Dict]:
+        """Split an AI response into sections by `### heading` lines.
+
+        When expected_sections is given, only headings matching them start a new
+        section; other `###` lines the model adds inside a section stay in its text.
+        """
+        matches = list(re.finditer(r"^###\s+(.+?)\s*$", text, re.MULTILINE))
+        if expected_sections:
+            wanted = {_normalize_heading(h) for h in expected_sections}
+            filtered = [m for m in matches if _normalize_heading(m.group(1)) in wanted]
+            if filtered:
+                matches = filtered
+
+        sections = []
+        for idx, m in enumerate(matches):
+            heading = re.sub(r"[*_`]", "", m.group(1)).strip()
+            end = matches[idx + 1].start() if idx + 1 < len(matches) else len(text)
+            content = text[m.end():end].strip()
 
             mermaid_blocks = re.findall(
                 r"```mermaid\s*\n(.*?)```", content, re.DOTALL

@@ -1,71 +1,94 @@
 <template>
   <div class="settings-page">
-    <h2>{{ t('settings.title') }}</h2>
+    <div class="page-header">
+      <div>
+        <h1>{{ t('settings.title') }}</h1>
+        <p class="page-subtitle">{{ t('settings.subtitle') }}</p>
+      </div>
+      <div class="page-actions">
+        <el-button type="primary" @click="showDialog = true">
+          <Icon name="plus" :size="16" />{{ t('settings.addModel') }}
+        </el-button>
+      </div>
+    </div>
 
-    <el-button type="primary" @click="showDialog = true" style="margin-bottom: 16px">
-      {{ t('settings.addModel') }}
-    </el-button>
+    <div v-if="!configStore.loading && configStore.models.length === 0" class="surface empty-state">
+      <span class="empty-icon"><Icon name="cpu" :size="24" /></span>
+      <p>{{ t('settings.noModels') }}</p>
+    </div>
 
-    <el-table :data="configStore.models" v-loading="configStore.loading" stripe>
-      <el-table-column prop="name" :label="t('settings.name')" width="180" />
-      <el-table-column :label="t('settings.provider')" width="140">
-        <template #default="{ row }">
-          <el-tag size="small">{{ providerLabel(row.provider) }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="model_id" :label="t('settings.modelId')" width="200" />
-      <el-table-column prop="base_url" label="Base URL" min-width="200">
-        <template #default="{ row }">
-          {{ row.base_url || t('common.default') }}
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('settings.isDefault')" width="80">
-        <template #default="{ row }">
-          <el-tag v-if="row.is_default" type="success" size="small">{{ t('common.yes') }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column :label="t('common.actions')" width="120" fixed="right">
-        <template #default="{ row }">
-          <el-popconfirm :title="t('common.confirmDelete')" @confirm="handleDelete(row.id)">
+    <div v-else class="model-grid" v-loading="configStore.loading">
+      <div v-for="m in configStore.models" :key="m.id" class="surface model-card">
+        <div class="model-head">
+          <span class="model-icon"><Icon name="cpu" :size="20" /></span>
+          <div class="model-title">
+            <span class="model-name">{{ m.name }}</span>
+            <span class="text-secondary">{{ providerLabel(m.provider) }}</span>
+          </div>
+          <span v-if="m.is_default" class="status-chip is-accent">{{ t('settings.isDefault') }}</span>
+        </div>
+        <dl class="model-meta">
+          <div><dt>{{ t('settings.modelId') }}</dt><dd class="mono">{{ m.model_id }}</dd></div>
+          <div><dt>{{ t('settings.endpoint') }}</dt><dd class="mono muted">{{ m.base_url || t('common.default') }}</dd></div>
+          <div><dt>{{ t('settings.apiKey') }}</dt><dd class="mono muted">{{ maskKey(m.api_key) }}</dd></div>
+        </dl>
+        <div class="model-actions">
+          <el-button v-if="!m.is_default" size="small" text @click="setDefault(m)">{{ t('settings.setDefault') }}</el-button>
+          <span class="grow"></span>
+          <el-popconfirm :title="t('common.confirmDelete')" @confirm="handleDelete(m.id)">
             <template #reference>
-              <el-button size="small" type="danger" link>{{ t('common.delete') }}</el-button>
+              <el-button size="small" text class="danger-btn"><Icon name="trash" :size="16" />{{ t('settings.remove') }}</el-button>
             </template>
           </el-popconfirm>
-        </template>
-      </el-table-column>
-    </el-table>
+        </div>
+      </div>
+    </div>
 
-    <el-dialog v-model="showDialog" :title="t('settings.dialogTitle')" width="500px">
-      <el-form :model="form" label-width="100px">
-        <el-form-item :label="t('settings.name')" required>
-          <el-input v-model="form.name" :placeholder="t('settings.namePlaceholder')" />
-        </el-form-item>
-        <el-form-item :label="t('settings.provider')" required>
-          <el-select v-model="form.provider" style="width: 100%">
-            <el-option v-for="p in providerIds" :key="p" :label="t(`settings.providers.${p}`)" :value="p" />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="t('settings.modelId')" required>
-          <el-input v-model="form.model_id" :placeholder="t('settings.modelIdPlaceholder')" />
-        </el-form-item>
-        <el-form-item label="API Key" required>
-          <el-input v-model="form.api_key" type="password" show-password placeholder="sk-..." />
-        </el-form-item>
-        <el-form-item label="Base URL">
-          <el-input v-model="form.base_url" :placeholder="t('settings.baseUrlPlaceholder')" />
-          <div class="form-tip">
-            <el-text size="small" type="info">
-              {{ t('settings.baseUrlTip') }}
-            </el-text>
+    <el-dialog v-model="showDialog" :title="t('settings.dialogTitle')" width="520px">
+      <div class="dialog-form">
+        <div class="field-block">
+          <span class="field-label">{{ t('settings.provider') }}</span>
+          <div class="provider-grid">
+            <button
+              v-for="p in providerIds"
+              :key="p"
+              type="button"
+              class="provider-card"
+              :class="{ selected: form.provider === p }"
+              @click="form.provider = p"
+            >
+              <span class="provider-name">{{ t(`settings.providers.${p}`) }}</span>
+              <span class="provider-desc">{{ t(`settings.providerDesc.${p}`) }}</span>
+            </button>
           </div>
-        </el-form-item>
-        <el-form-item :label="t('settings.setDefault')">
+        </div>
+        <label class="field-block">
+          <span class="field-label">{{ t('settings.name') }} *</span>
+          <el-input v-model="form.name" :placeholder="t('settings.namePlaceholder')" />
+        </label>
+        <label class="field-block">
+          <span class="field-label">{{ t('settings.modelId') }} *</span>
+          <el-input v-model="form.model_id" :placeholder="t('settings.modelIdPlaceholder')" class="mono-input" />
+        </label>
+        <label class="field-block">
+          <span class="field-label">API Key *</span>
+          <el-input v-model="form.api_key" type="password" show-password placeholder="sk-..." class="mono-input" />
+        </label>
+        <label class="field-block">
+          <span class="field-label">Base URL</span>
+          <el-input v-model="form.base_url" :placeholder="t('settings.baseUrlPlaceholder')" class="mono-input" />
+          <span class="field-hint">{{ t('settings.baseUrlTip') }}</span>
+        </label>
+        <label class="switch-row">
           <el-switch v-model="form.is_default" />
-        </el-form-item>
-      </el-form>
+          <span>{{ t('settings.setDefault') }}</span>
+        </label>
+      </div>
       <template #footer>
-        <el-button @click="showDialog = false">{{ t('common.cancel') }}</el-button>
-        <el-button type="primary" :loading="saving" @click="handleSave">{{ t('common.save') }}</el-button>
+        <el-button text @click="showDialog = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="saving" @click="handleSave">
+          <Icon v-if="!saving" name="check" :size="16" />{{ t('common.save') }}
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -73,15 +96,17 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { useConfigStore } from '../stores/config'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
+import Icon from '../components/Icon.vue'
+import { useConfigStore } from '../stores/config'
 
 const { t, te } = useI18n()
-
 const configStore = useConfigStore()
 const showDialog = ref(false)
 const saving = ref(false)
+
+const providerIds = ['openai', 'anthropic', 'tongyi', 'openai_compat']
 
 const form = reactive({
   name: '',
@@ -92,10 +117,12 @@ const form = reactive({
   is_default: false,
 })
 
-const providerIds = ['openai', 'anthropic', 'tongyi', 'openai_compat']
-
 function providerLabel(p) {
   return te(`settings.providerShort.${p}`) ? t(`settings.providerShort.${p}`) : p
+}
+
+function maskKey(key) {
+  return key ? `${key.slice(0, 3)}••••••••${key.slice(-4)}` : 'sk-••••••••'
 }
 
 async function handleSave() {
@@ -121,6 +148,11 @@ async function handleSave() {
   }
 }
 
+async function setDefault(m) {
+  await configStore.editModel(m.id, { is_default: true })
+  await configStore.fetchModels()
+}
+
 async function handleDelete(id) {
   await configStore.removeModel(id)
   ElMessage.success(t('common.deleted'))
@@ -133,12 +165,143 @@ onMounted(() => {
 
 <style scoped>
 .settings-page {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.form-tip {
-  margin-top: 4px;
+.empty-state {
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  color: var(--text-secondary);
+  max-width: 560px;
+}
+
+.empty-icon {
+  display: inline-flex;
+  width: 48px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.model-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 20px;
+}
+
+.model-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.model-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.model-icon {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.model-title {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+}
+
+.model-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.model-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.model-meta div { display: flex; justify-content: space-between; gap: 12px; }
+.model-meta dt { color: var(--text-muted); flex-shrink: 0; }
+.model-meta dd { color: var(--text-primary); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.model-meta dd.muted { color: var(--text-secondary); }
+
+.model-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.grow { flex: 1; }
+.danger-btn { color: var(--danger) !important; }
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.field-block { display: flex; flex-direction: column; gap: 8px; }
+.field-label { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+.field-hint { font-size: 12px; line-height: 1.5; color: var(--text-muted); }
+.mono-input :deep(.el-input__inner) { font-family: var(--font-mono); font-size: 13px; }
+
+.provider-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.provider-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  text-align: left;
+  border-radius: 10px;
+  cursor: pointer;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+}
+
+.provider-card:hover { border-color: var(--accent-line); }
+.provider-card.selected { background: var(--accent-light); border-color: var(--accent-line); }
+.provider-name { font-size: 13px; font-weight: 600; }
+.provider-desc { font-size: 12px; color: var(--text-muted); }
+
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  cursor: pointer;
 }
 </style>

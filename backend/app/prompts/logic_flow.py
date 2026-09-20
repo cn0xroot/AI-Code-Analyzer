@@ -85,6 +85,15 @@ sequenceDiagram
 ```"""
 
 _LOGIC_TEMPLATES = {"zh": _LOGIC_ZH, "en": _LOGIC_EN}
+
+LOGIC_SECTIONS = {
+    "zh": ["逻辑流程说明", "关键实现细节", "逻辑流程图", "时序图"],
+    "en": ["Logic Flow", "Key Implementation Details", "Logic Flow Diagram", "Sequence Diagram"],
+}
+
+
+def logic_sections(language: str = "zh") -> list[str]:
+    return LOGIC_SECTIONS[normalize_language(language)]
 _SCOPE = {
     "zh": lambda fn: f"函数 `{fn}`" if fn else "主要逻辑",
     "en": lambda fn: f"the function `{fn}`" if fn else "the main logic",

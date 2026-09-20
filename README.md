@@ -192,18 +192,20 @@ AI-Code-Analyzer/
 │   │   │   ├── HistoryPage.vue     # History (with re-analysis)
 │   │   │   └── SettingsPage.vue    # AI model configuration
 │   │   ├── components/
-│   │   │   ├── AppHeader.vue       # Navigation + 7 theme switcher
+│   │   │   ├── AppSidebar.vue      # Sidebar navigation + language + 7 theme switcher
+│   │   │   ├── Icon.vue            # Inline SVG icon set
 │   │   │   ├── MermaidDiagram.vue  # Mermaid diagram rendering
 │   │   │   ├── RepoInput.vue       # Repo cloning (SSE real-time progress/speed)
 │   │   │   ├── FileUploader.vue    # File upload
 │   │   │   ├── ModelSelector.vue   # AI model selector
 │   │   │   ├── AnalysisProgress.vue# Analysis progress (step indicator)
-│   │   │   ├── DiagramTabs.vue     # Result tabs
+│   │   │   ├── ResultSections.vue  # Section navigator + result content
 │   │   │   └── CodeViewer.vue      # Code highlighting
 │   │   ├── api/                    # Axios + fetch API wrapper
 │   │   ├── stores/                 # Pinia state management (with sessionStorage persistence)
+│   │   ├── i18n/                   # vue-i18n setup + zh-CN / en locale packs
 │   │   ├── router/                 # Vue Router
-│   │   └── styles/main.css         # 7 themes CSS variables + Element Plus overrides
+│   │   └── styles/main.css         # Design tokens (7 themes), layout primitives, Element Plus overrides
 │   ├── package.json
 │   └── vite.config.js
 └── README.md
