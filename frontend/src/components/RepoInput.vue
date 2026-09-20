@@ -1,29 +1,29 @@
 <template>
   <el-form :model="form" label-width="100px">
-    <el-form-item label="仓库平台">
-      <el-select v-model="form.platform" placeholder="选择平台">
+    <el-form-item :label="t('repo.platform')">
+      <el-select v-model="form.platform" :placeholder="t('repo.selectPlatform')">
         <el-option label="GitHub" value="github" />
         <el-option label="GitLab" value="gitlab" />
         <el-option label="Gitee" value="gitee" />
       </el-select>
     </el-form-item>
-    <el-form-item label="仓库地址">
+    <el-form-item :label="t('repo.url')">
       <el-input
         v-model="form.url"
         placeholder="https://github.com/user/repo"
         clearable
       />
     </el-form-item>
-    <el-form-item label="分支">
+    <el-form-item :label="t('repo.branch')">
       <el-input
         v-model="form.branch"
-        placeholder="默认分支 (可选)"
+        :placeholder="t('repo.branchPlaceholder')"
         clearable
       />
     </el-form-item>
     <el-form-item>
       <el-button type="primary" :loading="loading" :disabled="loading" @click="handleClone">
-        {{ loading ? '克隆中...' : '克隆仓库' }}
+        {{ loading ? t('repo.cloning') : t('repo.clone') }}
       </el-button>
     </el-form-item>
 
@@ -47,9 +47,9 @@
           {{ formatBytes(curBytes) }}
         </span>
         <span v-else-if="objects" class="bytes-info">
-          对象: {{ objects }}
+          {{ t('repo.objects') }}: {{ objects }}
         </span>
-        <span class="elapsed">已用时 {{ formatElapsed(elapsedTime) }}</span>
+        <span class="elapsed">{{ t('repo.elapsed') }} {{ formatElapsed(elapsedTime) }}</span>
       </div>
     </div>
   </el-form>
@@ -60,6 +60,9 @@ import { reactive, ref, onUnmounted, computed } from 'vue'
 import { Loading } from '@element-plus/icons-vue'
 import { cloneRepoStream } from '../api/repos'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t, te } = useI18n()
 
 const emit = defineEmits(['cloned'])
 
@@ -80,20 +83,8 @@ const form = reactive({
 })
 
 const progressText = computed(() => {
-  const stageMap = {
-    starting: '正在连接仓库...',
-    counting: '正在统计对象...',
-    compressing: '正在压缩数据...',
-    receiving: '正在接收数据...',
-    resolving: '正在解析引用...',
-    writing: '正在写入文件...',
-    cloning: '正在克隆...',
-    done_clone: '克隆完成，正在处理...',
-    counting_files: '正在统计代码文件...',
-    done: '克隆完成!',
-    error: '克隆失败',
-  }
-  const text = stageMap[progressStage.value] || '正在克隆仓库...'
+  const stage = progressStage.value
+  const text = stage && te(`repo.stage.${stage}`) ? t(`repo.stage.${stage}`) : t('repo.stage.default')
   if (progressStage.value === 'receiving' && progressPercent.value > 0) {
     return `${text} ${progressPercent.value}%`
   }
@@ -141,7 +132,7 @@ function resetProgress() {
 
 async function handleClone() {
   if (!form.url) {
-    ElMessage.warning('请输入仓库地址')
+    ElMessage.warning(t('repo.enterUrl'))
     return
   }
   loading.value = true
@@ -186,7 +177,7 @@ async function handleClone() {
           if (data.objects) objects.value = data.objects
 
           if (data.stage === 'error') {
-            throw new Error(data.message || '克隆失败')
+            throw new Error(data.message || t('repo.stage.error'))
           }
 
           if (data.result) {
@@ -201,13 +192,13 @@ async function handleClone() {
     if (finalResult) {
       progressPercent.value = 100
       progressStage.value = 'done'
-      ElMessage.success(`克隆成功: ${finalResult.name} (${finalResult.file_count} 个代码文件)`)
+      ElMessage.success(t('repo.cloneSuccess', { name: finalResult.name, count: finalResult.file_count }))
       emit('cloned', finalResult)
     } else {
-      throw new Error('未收到克隆结果')
+      throw new Error(t('repo.noResult'))
     }
   } catch (err) {
-    ElMessage.error('克隆失败: ' + (err.message || err))
+    ElMessage.error(t('repo.cloneFailed') + (err.message || err))
   } finally {
     stopTimer()
     setTimeout(() => {

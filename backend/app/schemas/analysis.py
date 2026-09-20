@@ -10,6 +10,7 @@ class AnalysisCreate(BaseModel):
     analysis_type: str  # "overview", "function", "logic_flow", "full"
     ai_config_id: int
     target_files: Optional[List[str]] = None
+    language: str = "zh"
 
 
 class AnalysisResultItem(BaseModel):
@@ -32,6 +33,7 @@ class AnalysisTaskResponse(BaseModel):
     ai_provider: str
     ai_model: str
     ai_config_id: Optional[int] = None
+    language: Optional[str] = "zh"
     error_message: Optional[str] = None
     created_at: datetime
     completed_at: Optional[datetime] = None
@@ -49,3 +51,4 @@ class AnalysisStatusResponse(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     ai_config_id: int
+    language: Optional[str] = None

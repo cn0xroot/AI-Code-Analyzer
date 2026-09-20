@@ -10,7 +10,8 @@ from app.schemas.analysis import AnalysisCreate
 from app.services.code_parser import CodeParser, ProjectStructure, FileAnalysis
 from app.services.ai_analyzer import AIAnalyzer
 from app.services.mermaid_generator import MermaidGenerator
-from app.prompts.overview import SYSTEM_PROMPT, build_overview_prompt
+from app.prompts import normalize_language
+from app.prompts.overview import build_system_prompt, build_overview_prompt
 from app.prompts.function_analysis import build_function_analysis_prompt
 from app.prompts.logic_flow import build_logic_flow_prompt
 from app.prompts.mermaid_templates import MERMAID_RULES
@@ -47,6 +48,7 @@ class AnalysisService:
             ai_provider=ai_config.provider,
             ai_model=ai_config.model_id,
             ai_config_id=ai_config.id,
+            language=normalize_language(request.language),
         )
         self.db.add(task)
         self.db.commit()
@@ -132,8 +134,9 @@ class AnalysisService:
             structure.languages,
             structure.total_lines,
             symbols_summary,
+            language=task.language,
         )
-        system = SYSTEM_PROMPT + "\n" + MERMAID_RULES
+        system = build_system_prompt(task.language) + "\n" + MERMAID_RULES
 
         content = await self._stream_ai(
             task.id, task.ai_config_id, system, prompt, "overview"
@@ -164,8 +167,9 @@ class AnalysisService:
                 file_analysis.file_path,
                 file_analysis.raw_content,
                 symbols_str,
+                language=task.language,
             )
-            system = SYSTEM_PROMPT + "\n" + MERMAID_RULES
+            system = build_system_prompt(task.language) + "\n" + MERMAID_RULES
 
             content = await self._stream_ai(
                 task.id, task.ai_config_id, system, prompt,
@@ -196,8 +200,9 @@ class AnalysisService:
             prompt = build_logic_flow_prompt(
                 file_analysis.file_path,
                 file_analysis.raw_content,
+                language=task.language,
             )
-            system = SYSTEM_PROMPT + "\n" + MERMAID_RULES
+            system = build_system_prompt(task.language) + "\n" + MERMAID_RULES
 
             content = await self._stream_ai(
                 task.id, task.ai_config_id, system, prompt,

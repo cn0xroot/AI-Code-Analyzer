@@ -1,7 +1,7 @@
 <template>
   <el-select
     v-model="selected"
-    placeholder="选择AI模型"
+    :placeholder="t('model.select')"
     :loading="configStore.loading"
     @change="emit('update:modelValue', $event)"
     style="width: 100%"
@@ -15,16 +15,19 @@
   </el-select>
   <div v-if="configStore.models.length === 0" class="no-model-tip">
     <el-text type="warning" size="small">
-      尚未配置AI模型，请先在
-      <router-link to="/settings">模型配置</router-link>
-      中添加
+      {{ t('model.noneConfigured') }}
+      <router-link to="/settings">{{ t('model.settingsLink') }}</router-link>
+      {{ t('model.addThere') }}
     </el-text>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useConfigStore } from '../stores/config'
+
+const { t } = useI18n()
 
 const props = defineProps({
   modelValue: { type: Number, default: null },

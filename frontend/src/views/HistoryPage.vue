@@ -1,42 +1,42 @@
 <template>
   <div class="history-page">
     <div class="page-header">
-      <h2>分析历史</h2>
+      <h2>{{ t('history.title') }}</h2>
       <el-button @click="fetchData" :loading="loading" text>
-        刷新
+        {{ t('common.refresh') }}
       </el-button>
     </div>
 
     <el-table :data="historyList" v-loading="loading" stripe style="border-radius: var(--radius)">
       <el-table-column prop="id" label="ID" width="70" />
-      <el-table-column label="项目" min-width="150">
+      <el-table-column :label="t('common.project')" min-width="150">
         <template #default="{ row }">
           {{ row.project_name || `Project #${row.project_id}` }}
         </template>
       </el-table-column>
-      <el-table-column label="分析类型" width="120">
+      <el-table-column :label="t('common.analysisType')" width="120">
         <template #default="{ row }">
           <el-tag size="small">{{ typeLabel(row.analysis_type) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="状态" width="100">
+      <el-table-column :label="t('common.status')" width="100">
         <template #default="{ row }">
           <el-tag :type="statusType(row.status)" size="small">
             {{ statusLabel(row.status) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="AI模型" width="180">
+      <el-table-column :label="t('common.aiModel')" width="180">
         <template #default="{ row }">
           {{ row.ai_provider }}/{{ row.ai_model }}
         </template>
       </el-table-column>
-      <el-table-column label="创建时间" width="180">
+      <el-table-column :label="t('common.createdAt')" width="180">
         <template #default="{ row }">
           {{ formatTime(row.created_at) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="220" fixed="right">
+      <el-table-column :label="t('common.actions')" width="260" fixed="right">
         <template #default="{ row }">
           <el-button
             size="small"
@@ -44,7 +44,7 @@
             link
             @click="$router.push(`/result/${row.id}`)"
           >
-            查看结果
+            {{ t('history.viewResult') }}
           </el-button>
           <el-button
             v-if="row.status === 'completed' || row.status === 'failed'"
@@ -53,11 +53,11 @@
             link
             @click="handleReanalyze(row)"
           >
-            重新分析
+            {{ t('common.reanalyze') }}
           </el-button>
-          <el-popconfirm title="确认删除?" @confirm="handleDelete(row.id)">
+          <el-popconfirm :title="t('common.confirmDelete')" @confirm="handleDelete(row.id)">
             <template #reference>
-              <el-button size="small" type="danger" link>删除</el-button>
+              <el-button size="small" type="danger" link>{{ t('common.delete') }}</el-button>
             </template>
           </el-popconfirm>
         </template>
@@ -75,28 +75,34 @@
     />
 
     <!-- Re-analyze dialog -->
-    <el-dialog v-model="showReanalyze" title="重新分析" width="440px">
+    <el-dialog v-model="showReanalyze" :title="t('common.reanalyze')" width="440px">
       <div class="reanalyze-info">
-        <p><strong>项目:</strong> {{ reanalyzeTarget?.project_name || `Project #${reanalyzeTarget?.project_id}` }}</p>
-        <p><strong>原分析类型:</strong> {{ typeLabel(reanalyzeTarget?.analysis_type) }}</p>
+        <p><strong>{{ t('common.project') }}:</strong> {{ reanalyzeTarget?.project_name || `Project #${reanalyzeTarget?.project_id}` }}</p>
+        <p><strong>{{ t('history.originalType') }}:</strong> {{ typeLabel(reanalyzeTarget?.analysis_type) }}</p>
       </div>
       <el-form label-width="90px" style="margin-top: 16px">
-        <el-form-item label="分析类型">
+        <el-form-item :label="t('common.analysisType')">
           <el-radio-group v-model="reanalyzeType">
-            <el-radio-button value="overview">项目概览</el-radio-button>
-            <el-radio-button value="function">功能分析</el-radio-button>
-            <el-radio-button value="logic_flow">逻辑流程</el-radio-button>
-            <el-radio-button value="full">全量分析</el-radio-button>
+            <el-radio-button value="overview">{{ t('analysisType.overview') }}</el-radio-button>
+            <el-radio-button value="function">{{ t('analysisType.function') }}</el-radio-button>
+            <el-radio-button value="logic_flow">{{ t('analysisType.logic_flow') }}</el-radio-button>
+            <el-radio-button value="full">{{ t('analysisType.full') }}</el-radio-button>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="AI模型">
+        <el-form-item :label="t('common.outputLanguage')">
+          <el-radio-group v-model="reanalyzeLanguage">
+            <el-radio-button value="zh">{{ t('lang.zh') }}</el-radio-button>
+            <el-radio-button value="en">{{ t('lang.en') }}</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item :label="t('common.aiModel')">
           <ModelSelector v-model="reanalyzeModel" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showReanalyze = false">取消</el-button>
+        <el-button @click="showReanalyze = false">{{ t('common.cancel') }}</el-button>
         <el-button type="primary" :loading="reanalyzing" :disabled="!reanalyzeModel" @click="doReanalyze">
-          开始分析
+          {{ t('common.startAnalysis') }}
         </el-button>
       </template>
     </el-dialog>
@@ -110,6 +116,10 @@ import { listHistory, deleteHistory } from '../api/history'
 import { useAnalysisStore } from '../stores/analysis'
 import ModelSelector from '../components/ModelSelector.vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+import { aiLanguage } from '../i18n'
+
+const { t, te, locale } = useI18n()
 
 const router = useRouter()
 const analysisStore = useAnalysisStore()
@@ -124,6 +134,7 @@ const showReanalyze = ref(false)
 const reanalyzeTarget = ref(null)
 const reanalyzeType = ref('overview')
 const reanalyzeModel = ref(null)
+const reanalyzeLanguage = ref(aiLanguage())
 const reanalyzing = ref(false)
 
 async function fetchData() {
@@ -141,6 +152,7 @@ async function fetchData() {
 function handleReanalyze(row) {
   reanalyzeTarget.value = row
   reanalyzeType.value = row.analysis_type || 'overview'
+  reanalyzeLanguage.value = row.language || aiLanguage()
   showReanalyze.value = true
 }
 
@@ -153,12 +165,13 @@ async function doReanalyze() {
       project_id: reanalyzeTarget.value.project_id,
       analysis_type: reanalyzeType.value,
       ai_config_id: reanalyzeModel.value,
+      language: reanalyzeLanguage.value,
     })
     showReanalyze.value = false
-    ElMessage.success('分析任务已创建')
+    ElMessage.success(t('history.taskCreated'))
     router.push(`/result/${result.task_id}`)
   } catch (err) {
-    ElMessage.error('创建失败: ' + (err.response?.data?.detail || err.message))
+    ElMessage.error(t('history.createFailed') + (err.response?.data?.detail || err.message))
   } finally {
     reanalyzing.value = false
   }
@@ -166,7 +179,7 @@ async function doReanalyze() {
 
 async function handleDelete(id) {
   await deleteHistory(id)
-  ElMessage.success('已删除')
+  ElMessage.success(t('common.deleted'))
   fetchData()
 }
 
@@ -175,19 +188,17 @@ function handlePageChange(page) {
   fetchData()
 }
 
-function formatTime(t) {
-  if (!t) return '-'
-  return new Date(t).toLocaleString('zh-CN')
+function formatTime(value) {
+  if (!value) return '-'
+  return new Date(value).toLocaleString(locale.value)
 }
 
 function typeLabel(type) {
-  const map = { overview: '项目概览', function: '功能分析', logic_flow: '逻辑流程', full: '全量分析' }
-  return map[type] || type
+  return type && te(`analysisType.${type}`) ? t(`analysisType.${type}`) : type
 }
 
 function statusLabel(s) {
-  const map = { pending: '等待中', parsing: '解析中', analyzing: '分析中', completed: '已完成', failed: '失败' }
-  return map[s] || s
+  return s && te(`status.${s}`) ? t(`status.${s}`) : s
 }
 
 function statusType(s) {

@@ -12,31 +12,43 @@
       router
       class="header-menu"
     >
-      <el-menu-item index="/">首页</el-menu-item>
-      <el-menu-item index="/analyze">代码分析</el-menu-item>
-      <el-menu-item index="/history">历史记录</el-menu-item>
-      <el-menu-item index="/settings">模型配置</el-menu-item>
+      <el-menu-item index="/">{{ t('nav.home') }}</el-menu-item>
+      <el-menu-item index="/analyze">{{ t('nav.analyze') }}</el-menu-item>
+      <el-menu-item index="/history">{{ t('nav.history') }}</el-menu-item>
+      <el-menu-item index="/settings">{{ t('nav.settings') }}</el-menu-item>
     </el-menu>
     <div class="header-right">
+      <el-dropdown trigger="click" @command="setLocale">
+        <el-button text class="lang-btn">
+          <span class="lang-icon">A/文</span>
+          {{ locale.startsWith('zh') ? t('lang.zh') : t('lang.en') }}
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="zh-CN" :class="{ 'is-active': locale === 'zh-CN' }">{{ t('lang.zh') }}</el-dropdown-item>
+            <el-dropdown-item command="en" :class="{ 'is-active': locale === 'en' }">{{ t('lang.en') }}</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
       <el-popover placement="bottom-end" :width="220" trigger="click">
         <template #reference>
           <el-button text class="theme-btn">
             <span class="swatch-preview" :class="`sw-${theme}`"></span>
-            主题
+            {{ t('nav.theme') }}
           </el-button>
         </template>
         <div class="theme-picker">
-          <div class="theme-title">选择主题</div>
+          <div class="theme-title">{{ t('nav.selectTheme') }}</div>
           <div class="theme-grid">
             <div
-              v-for="t in themes"
-              :key="t.id"
+              v-for="th in themes"
+              :key="th.id"
               class="theme-item"
-              :class="{ selected: theme === t.id }"
-              @click="handleTheme(t.id)"
+              :class="{ selected: theme === th.id }"
+              @click="handleTheme(th.id)"
             >
-              <span class="swatch" :class="`sw-${t.id}`"></span>
-              <span class="theme-label">{{ t.label }}</span>
+              <span class="swatch" :class="`sw-${th.id}`"></span>
+              <span class="theme-label">{{ t(`theme.${th.id}`) }}</span>
             </div>
           </div>
         </div>
@@ -48,15 +60,19 @@
 <script setup>
 import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { setLocale } from '../i18n'
+
+const { t, locale } = useI18n()
 
 const themes = [
-  { id: 'midnight', label: '暗夜' },
-  { id: 'ocean', label: '海洋' },
-  { id: 'forest', label: '森林' },
-  { id: 'sunset', label: '暮色' },
-  { id: 'rose', label: '玫瑰' },
-  { id: 'nord', label: 'Nord' },
-  { id: 'light', label: '浅色' },
+  { id: 'midnight' },
+  { id: 'ocean' },
+  { id: 'forest' },
+  { id: 'sunset' },
+  { id: 'rose' },
+  { id: 'nord' },
+  { id: 'light' },
 ]
 
 const props = defineProps({
@@ -145,6 +161,29 @@ watch(() => props.theme, (t) => {
 
 .header-right {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lang-btn {
+  color: var(--text-secondary) !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lang-icon {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 5px;
+  border: 1px solid var(--border-color);
+}
+
+:deep(.el-dropdown-menu__item.is-active) {
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .theme-btn {

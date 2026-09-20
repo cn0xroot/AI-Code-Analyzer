@@ -4,44 +4,50 @@
       <div class="hero-badge">AI-Powered Code Analysis</div>
       <h1>AI Code Analyzer</h1>
       <p class="subtitle">
-        基于 AI 大模型的代码分析工具，自动生成项目架构图、类图、流程图
+        {{ t('home.subtitle') }}
       </p>
       <div class="features">
         <el-row :gutter="20">
           <el-col :span="8">
             <el-card shadow="hover" class="feature-card">
               <div class="feature-icon">&#127760;</div>
-              <h3>多平台支持</h3>
-              <p>支持 GitHub、GitLab、Gitee 在线仓库分析，也支持本地代码上传</p>
+              <h3>{{ t('home.feature1Title') }}</h3>
+              <p>{{ t('home.feature1Desc') }}</p>
             </el-card>
           </el-col>
           <el-col :span="8">
             <el-card shadow="hover" class="feature-card">
               <div class="feature-icon">&#128187;</div>
-              <h3>多语言解析</h3>
-              <p>支持 Python、Java、JavaScript、Go、C/C++、Swift、Kotlin 等主流语言</p>
+              <h3>{{ t('home.feature2Title') }}</h3>
+              <p>{{ t('home.feature2Desc') }}</p>
             </el-card>
           </el-col>
           <el-col :span="8">
             <el-card shadow="hover" class="feature-card">
               <div class="feature-icon">&#128202;</div>
-              <h3>可视化图表</h3>
-              <p>自动生成 Mermaid 架构图、类图、流程图、时序图，支持导出 SVG</p>
+              <h3>{{ t('home.feature3Title') }}</h3>
+              <p>{{ t('home.feature3Desc') }}</p>
             </el-card>
           </el-col>
         </el-row>
       </div>
       <div class="actions">
         <el-button type="primary" size="large" @click="$router.push('/analyze')">
-          开始分析
+          {{ t('common.startAnalysis') }}
         </el-button>
         <el-button size="large" @click="$router.push('/history')">
-          查看历史
+          {{ t('home.viewHistory') }}
         </el-button>
       </div>
     </div>
   </div>
 </template>
+
+<script setup>
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+</script>
 
 <style scoped>
 .home-page {

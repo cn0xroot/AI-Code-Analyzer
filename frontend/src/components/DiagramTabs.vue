@@ -24,7 +24,10 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { marked } from 'marked'
+import { useI18n } from 'vue-i18n'
 import MermaidDiagram from './MermaidDiagram.vue'
+
+const { t } = useI18n()
 
 const props = defineProps({
   results: { type: Array, default: () => [] },
@@ -35,7 +38,7 @@ const activeTab = ref('')
 const groupedResults = computed(() => {
   const groups = {}
   for (const r of props.results) {
-    const label = r.section || '其他'
+    const label = r.section || t('result.other')
     if (!groups[label]) {
       groups[label] = { label, items: [] }
     }

@@ -1,10 +1,10 @@
 <template>
   <div>
     <el-form label-width="100px">
-      <el-form-item label="项目名称">
-        <el-input v-model="projectName" placeholder="输入项目名称" />
+      <el-form-item :label="t('upload.projectName')">
+        <el-input v-model="projectName" :placeholder="t('upload.projectNamePlaceholder')" />
       </el-form-item>
-      <el-form-item label="上传文件">
+      <el-form-item :label="t('upload.files')">
         <el-upload
           ref="uploadRef"
           :auto-upload="false"
@@ -17,10 +17,10 @@
           <div class="upload-area">
             <el-icon :size="40"><UploadFilled /></el-icon>
             <div class="el-upload__text">
-              拖拽文件到此处，或 <em>点击上传</em>
+              {{ t('upload.dragHint') }} <em>{{ t('upload.clickUpload') }}</em>
             </div>
             <div class="el-upload__tip">
-              支持代码文件或 .zip 压缩包
+              {{ t('upload.tip') }}
             </div>
           </div>
         </el-upload>
@@ -32,7 +32,7 @@
           :disabled="fileList.length === 0"
           @click="handleUpload"
         >
-          上传文件
+          {{ t('upload.upload') }}
         </el-button>
       </el-form-item>
     </el-form>
@@ -44,6 +44,9 @@ import { ref } from 'vue'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { uploadFiles } from '../api/repos'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const emit = defineEmits(['uploaded'])
 
@@ -70,11 +73,11 @@ async function handleUpload() {
       formData.append('files', file.raw)
     })
     const { data } = await uploadFiles(formData, projectName.value)
-    ElMessage.success(`上传成功: ${data.name} (${data.file_count} 个代码文件)`)
+    ElMessage.success(t('upload.success', { name: data.name, count: data.file_count }))
     emit('uploaded', data)
     fileList.value = []
   } catch (err) {
-    ElMessage.error('上传失败: ' + (err.response?.data?.detail || err.message))
+    ElMessage.error(t('upload.failed') + (err.response?.data?.detail || err.message))
   } finally {
     loading.value = false
   }

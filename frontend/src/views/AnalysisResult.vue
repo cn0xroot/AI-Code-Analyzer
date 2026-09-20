@@ -13,7 +13,7 @@
           <div class="live-meta">
             <span v-if="livePhase" class="live-phase">{{ phaseLabel(livePhase) }}</span>
             <span v-if="liveFile" class="live-file">{{ liveFile }}</span>
-            <span class="live-chars">{{ liveText.length }} 字符</span>
+            <span class="live-chars">{{ liveText.length }} {{ t('result.chars') }}</span>
           </div>
           <div class="live-markdown" ref="liveRef" v-html="renderedMarkdown"></div>
         </div>
@@ -28,13 +28,13 @@
     <!-- Completed -->
     <template v-else-if="task.status === 'completed'">
       <div class="result-header">
-        <h2>分析结果</h2>
+        <h2>{{ t('result.title') }}</h2>
         <el-descriptions :column="3" border size="small">
-          <el-descriptions-item label="项目">{{ task.project_name || `Project #${task.project_id}` }}</el-descriptions-item>
-          <el-descriptions-item label="分析类型">{{ analysisTypeLabel }}</el-descriptions-item>
-          <el-descriptions-item label="AI模型">{{ task.ai_provider }} / {{ task.ai_model }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ formatTime(task.created_at) }}</el-descriptions-item>
-          <el-descriptions-item label="完成时间">{{ formatTime(task.completed_at) }}</el-descriptions-item>
+          <el-descriptions-item :label="t('common.project')">{{ task.project_name || `Project #${task.project_id}` }}</el-descriptions-item>
+          <el-descriptions-item :label="t('common.analysisType')">{{ analysisTypeLabel }}</el-descriptions-item>
+          <el-descriptions-item :label="t('common.aiModel')">{{ task.ai_provider }} / {{ task.ai_model }}</el-descriptions-item>
+          <el-descriptions-item :label="t('common.createdAt')">{{ formatTime(task.created_at) }}</el-descriptions-item>
+          <el-descriptions-item :label="t('common.completedAt')">{{ formatTime(task.completed_at) }}</el-descriptions-item>
         </el-descriptions>
       </div>
 
@@ -43,12 +43,12 @@
       <!-- Chat Panel -->
       <div class="chat-section">
         <div class="chat-header">
-          <h3>AI 对话</h3>
-          <span class="chat-hint">基于分析结果向 AI 提问</span>
+          <h3>{{ t('result.chatTitle') }}</h3>
+          <span class="chat-hint">{{ t('result.chatHint') }}</span>
         </div>
         <div class="chat-messages" ref="chatMessagesRef">
           <div v-if="chatMessages.length === 0" class="chat-empty">
-            <p>你可以针对分析结果提问，例如：</p>
+            <p>{{ t('result.chatEmpty') }}</p>
             <div class="chat-suggestions">
               <el-button
                 v-for="s in suggestions"
@@ -64,7 +64,7 @@
             class="chat-msg"
             :class="msg.role"
           >
-            <div class="msg-role">{{ msg.role === 'user' ? '你' : 'AI' }}</div>
+            <div class="msg-role">{{ msg.role === 'user' ? t('result.you') : 'AI' }}</div>
             <div class="msg-body" v-html="renderMd(msg.content)"></div>
           </div>
           <div v-if="chatStreaming" class="chat-msg assistant">
@@ -75,7 +75,7 @@
         <div class="chat-input-area">
           <el-input
             v-model="chatInput"
-            placeholder="输入你的问题..."
+            :placeholder="t('result.inputPlaceholder')"
             :disabled="chatStreaming"
             @keydown.enter.prevent="sendMessage()"
             autosize
@@ -88,7 +88,7 @@
             :disabled="!chatInput.trim() || chatStreaming"
             @click="sendMessage()"
           >
-            发送
+            {{ t('result.send') }}
           </el-button>
         </div>
       </div>
@@ -103,11 +103,14 @@ import { marked } from 'marked'
 import mermaid from 'mermaid'
 import { useAnalysisStore } from '../stores/analysis'
 import { useConfigStore } from '../stores/config'
+import { useI18n } from 'vue-i18n'
+import { aiLanguage } from '../i18n'
 import { streamAnalysis, chatWithAnalysis } from '../api/analysis'
 import AnalysisProgress from '../components/AnalysisProgress.vue'
 import DiagramTabs from '../components/DiagramTabs.vue'
 
 const route = useRoute()
+const { t, te, tm, locale } = useI18n()
 const analysisStore = useAnalysisStore()
 const configStore = useConfigStore()
 const task = ref(null)
@@ -125,12 +128,7 @@ const chatInput = ref('')
 const chatStreaming = ref(false)
 const chatStreamText = ref('')
 const chatMessagesRef = ref(null)
-const suggestions = [
-  '这个项目的核心亮点是什么？',
-  '代码中有什么潜在的安全问题？',
-  '如何优化这个项目的性能？',
-  '项目的扩展性如何？建议如何改进？',
-]
+const suggestions = computed(() => tm('result.suggestions'))
 
 mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' })
 
@@ -186,18 +184,17 @@ async function renderMermaidBlocks() {
 }
 
 const analysisTypeLabel = computed(() => {
-  const map = { overview: '项目概览', function: '功能分析', logic_flow: '逻辑流程', full: '全量分析' }
-  return map[task.value?.analysis_type] || task.value?.analysis_type
+  const type = task.value?.analysis_type
+  return type && te(`analysisType.${type}`) ? t(`analysisType.${type}`) : type
 })
 
-function formatTime(t) {
-  if (!t) return '-'
-  return new Date(t).toLocaleString('zh-CN')
+function formatTime(value) {
+  if (!value) return '-'
+  return new Date(value).toLocaleString(locale.value)
 }
 
 function phaseLabel(p) {
-  const map = { overview: '项目概览分析', function: '功能分析', logic_flow: '逻辑流程分析' }
-  return map[p] || p
+  return te(`phase.${p}`) ? t(`phase.${p}`) : p
 }
 
 // Chat functions
@@ -223,7 +220,7 @@ async function sendMessage(text) {
 
   try {
     const taskId = route.params.taskId
-    const response = await chatWithAnalysis(taskId, msg, aiConfigId)
+    const response = await chatWithAnalysis(taskId, msg, aiConfigId, aiLanguage())
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
 
     const reader = response.body.getReader()
@@ -251,7 +248,7 @@ async function sendMessage(text) {
             chatStreamText.value = ''
             chatStreaming.value = false
           } else if (data.type === 'error') {
-            chatMessages.value.push({ role: 'assistant', content: `错误: ${data.content}` })
+            chatMessages.value.push({ role: 'assistant', content: t('result.error') + data.content })
             chatStreaming.value = false
           }
         } catch { /* ignore */ }
@@ -264,7 +261,7 @@ async function sendMessage(text) {
       chatStreaming.value = false
     }
   } catch (err) {
-    chatMessages.value.push({ role: 'assistant', content: `请求失败: ${err.message}` })
+    chatMessages.value.push({ role: 'assistant', content: t('result.requestFailed') + err.message })
     chatStreaming.value = false
   }
 }

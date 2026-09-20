@@ -3,12 +3,12 @@
     <el-result
       v-if="status === 'failed'"
       icon="error"
-      title="分析失败"
-      :sub-title="errorMessage || '未知错误'"
+      :title="t('progress.failed')"
+      :sub-title="errorMessage || t('common.unknownError')"
     >
       <template #extra>
         <el-button type="primary" @click="$router.push('/analyze')">
-          重新分析
+          {{ t('common.reanalyze') }}
         </el-button>
       </template>
     </el-result>
@@ -16,10 +16,10 @@
       <el-icon :size="48" class="spin-icon"><Loading /></el-icon>
       <h3>{{ statusText }}</h3>
       <el-steps :active="stepIndex" align-center style="margin-top: 24px; max-width: 500px">
-        <el-step title="排队中" />
-        <el-step title="解析代码" />
-        <el-step title="AI分析" />
-        <el-step title="完成" />
+        <el-step :title="t('progress.queued')" />
+        <el-step :title="t('progress.parsing')" />
+        <el-step :title="t('progress.analyzing')" />
+        <el-step :title="t('progress.done')" />
       </el-steps>
       <el-progress
         :percentage="progressPercent"
@@ -27,7 +27,7 @@
         style="width: 300px; margin-top: 20px"
         :status="progressPercent >= 100 ? 'success' : undefined"
       />
-      <p class="tip">分析时间取决于项目大小和AI模型响应速度</p>
+      <p class="tip">{{ t('progress.tip') }}</p>
     </div>
   </div>
 </template>
@@ -35,6 +35,9 @@
 <script setup>
 import { computed } from 'vue'
 import { Loading } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   status: { type: String, default: 'pending' },
@@ -43,11 +46,11 @@ const props = defineProps({
 
 const statusText = computed(() => {
   const map = {
-    pending: '等待分析...',
-    parsing: '正在解析代码结构...',
-    analyzing: '正在调用AI分析，请稍候...',
+    pending: t('progress.pending'),
+    parsing: t('progress.parsingText'),
+    analyzing: t('progress.analyzingText'),
   }
-  return map[props.status] || '处理中...'
+  return map[props.status] || t('progress.processing')
 })
 
 const stepIndex = computed(() => {

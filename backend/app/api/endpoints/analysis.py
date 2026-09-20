@@ -7,6 +7,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
+from app.prompts import normalize_language
 from app.schemas.analysis import (
     AnalysisCreate, AnalysisTaskResponse, AnalysisStatusResponse, ChatRequest
 )
@@ -171,6 +172,27 @@ async def stream_analysis(task_id: int, db: Session = Depends(get_db)):
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
+
+CHAT_SYSTEM_PROMPT = {
+    "zh": """你是一个代码分析助手。用户已经对一个项目进行了代码分析，以下是分析结果的摘要。
+请基于这些分析结果回答用户的问题。回答使用中文，可以使用 Markdown 格式和 Mermaid 图表。
+
+## 分析结果上下文
+{context}""",
+    "en": """You are a code analysis assistant. The user has already analyzed a project; a summary of the results follows.
+Answer the user's questions based on these results. Respond in English. You may use Markdown formatting and Mermaid diagrams.
+
+## Analysis Context
+{context}""",
+}
+
+CHAT_LABELS = {
+    "zh": {"project": "项目名", "analysis_type": "分析类型", "model": "AI模型", "file": "文件",
+           "user": "用户", "assistant": "助手", "current_question": "当前问题"},
+    "en": {"project": "Project", "analysis_type": "Analysis type", "model": "AI model", "file": "File",
+           "user": "User", "assistant": "Assistant", "current_question": "Current question"},
+}
+
 # In-memory chat history per task
 _chat_histories = {}
 
@@ -192,15 +214,18 @@ async def chat_with_analysis(
     project = db.query(Project).filter(Project.id == task.project_id).first()
     results = db.query(AnalysisResult).filter(AnalysisResult.task_id == task_id).all()
 
+    language = normalize_language(request.language or task.language)
+    labels = CHAT_LABELS[language]
+
     context_parts = [
-        f"项目名: {project.name if project else 'Unknown'}",
-        f"分析类型: {task.analysis_type}",
-        f"AI模型: {task.ai_provider}/{task.ai_model}",
+        f"{labels['project']}: {project.name if project else 'Unknown'}",
+        f"{labels['analysis_type']}: {task.analysis_type}",
+        f"{labels['model']}: {task.ai_provider}/{task.ai_model}",
     ]
     for r in results:
         context_parts.append(f"\n--- {r.section} ---")
         if r.file_path:
-            context_parts.append(f"文件: {r.file_path}")
+            context_parts.append(f"{labels['file']}: {r.file_path}")
         if r.content_text:
             context_parts.append(r.content_text[:2000])
         if r.mermaid_code:
@@ -208,11 +233,7 @@ async def chat_with_analysis(
 
     context_str = "\n".join(context_parts)
 
-    system_prompt = f"""你是一个代码分析助手。用户已经对一个项目进行了代码分析，以下是分析结果的摘要。
-请基于这些分析结果回答用户的问题。回答使用中文，可以使用 Markdown 格式和 Mermaid 图表。
-
-## 分析结果上下文
-{context_str[:8000]}"""
+    system_prompt = CHAT_SYSTEM_PROMPT[language].format(context=context_str[:8000])
 
     # Maintain chat history
     if task_id not in _chat_histories:
@@ -237,7 +258,7 @@ async def chat_with_analysis(
                 messages.append(msg)
 
             # Use streaming chat
-            async for chunk in provider.chat_stream(system_prompt, _build_chat_user_prompt(messages)):
+            async for chunk in provider.chat_stream(system_prompt, _build_chat_user_prompt(messages, language)):
                 full_text += chunk
                 data = {"type": "chunk", "content": chunk}
                 yield f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
@@ -252,14 +273,15 @@ async def chat_with_analysis(
     return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
-def _build_chat_user_prompt(messages: list) -> str:
+def _build_chat_user_prompt(messages: list, language: str = "zh") -> str:
     """Build a single user prompt from conversation history."""
     if len(messages) == 1:
         return messages[0]["content"]
 
+    labels = CHAT_LABELS[language]
     parts = []
     for msg in messages[:-1]:
-        role = "用户" if msg["role"] == "user" else "助手"
+        role = labels["user"] if msg["role"] == "user" else labels["assistant"]
         parts.append(f"[{role}]: {msg['content']}")
-    parts.append(f"\n当前问题: {messages[-1]['content']}")
+    parts.append(f"\n{labels['current_question']}: {messages[-1]['content']}")
     return "\n".join(parts)

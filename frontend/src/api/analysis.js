@@ -11,11 +11,11 @@ export const streamAnalysis = (taskId) => {
   return fetch(`${baseURL}/analysis/${taskId}/stream`)
 }
 
-export const chatWithAnalysis = (taskId, message, aiConfigId) => {
+export const chatWithAnalysis = (taskId, message, aiConfigId, language) => {
   const baseURL = api.defaults.baseURL || '/api/v1'
   return fetch(`${baseURL}/analysis/${taskId}/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, ai_config_id: aiConfigId }),
+    body: JSON.stringify({ message, ai_config_id: aiConfigId, language }),
   })
 }

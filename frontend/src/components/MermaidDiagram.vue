@@ -2,17 +2,17 @@
   <div class="mermaid-container">
     <div class="mermaid-toolbar">
       <el-tag size="small" type="info">{{ diagramType }}</el-tag>
-      <el-button size="small" @click="copyCode">复制代码</el-button>
-      <el-button size="small" @click="downloadSvg">下载SVG</el-button>
+      <el-button size="small" @click="copyCode">{{ t('mermaid.copy') }}</el-button>
+      <el-button size="small" @click="downloadSvg">{{ t('mermaid.download') }}</el-button>
     </div>
     <div ref="diagramRef" class="mermaid-render">
       <div v-if="renderFailed" class="mermaid-fallback">
-        <p class="fallback-hint">图表渲染失败，显示源码：</p>
+        <p class="fallback-hint">{{ t('mermaid.renderFailed') }}</p>
         <pre class="mermaid-source">{{ code }}</pre>
       </div>
     </div>
     <el-collapse v-if="!renderFailed">
-      <el-collapse-item title="查看Mermaid源码">
+      <el-collapse-item :title="t('mermaid.viewSource')">
         <pre class="mermaid-source">{{ code }}</pre>
       </el-collapse-item>
     </el-collapse>
@@ -23,6 +23,9 @@
 import { ref, watch, onMounted, nextTick } from 'vue'
 import mermaid from 'mermaid'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   code: { type: String, required: true },
@@ -97,7 +100,7 @@ async function renderDiagram() {
 
 function copyCode() {
   navigator.clipboard.writeText(props.code).then(() => {
-    ElMessage.success('已复制到剪贴板')
+    ElMessage.success(t('mermaid.copied'))
   })
 }
 

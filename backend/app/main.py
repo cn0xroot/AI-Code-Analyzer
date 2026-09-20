@@ -11,6 +11,12 @@ from app.config import settings
 
 Base.metadata.create_all(bind=engine)
 
+with engine.connect() as conn:
+    cols = {row[1] for row in conn.exec_driver_sql("PRAGMA table_info(analysis_tasks)")}
+    if "language" not in cols:
+        conn.exec_driver_sql("ALTER TABLE analysis_tasks ADD COLUMN language VARCHAR(10) DEFAULT 'zh'")
+        conn.commit()
+
 app = FastAPI(title=settings.APP_NAME, version="1.0.0")
 
 app.add_middleware(

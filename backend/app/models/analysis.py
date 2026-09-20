@@ -25,6 +25,7 @@ class AnalysisTask(Base):
     ai_provider = Column(String(50), nullable=False)
     ai_model = Column(String(100), nullable=False)
     ai_config_id = Column(Integer, ForeignKey("ai_model_configs.id"), nullable=True)
+    language = Column(String(10), default="zh")
     error_message = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     completed_at = Column(DateTime, nullable=True)

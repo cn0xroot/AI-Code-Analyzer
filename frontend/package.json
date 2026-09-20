@@ -9,13 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.4.0",
-    "vue-router": "^4.3.0",
-    "pinia": "^2.1.0",
     "axios": "^1.7.0",
-    "mermaid": "^11.0.0",
+    "element-plus": "^2.7.0",
     "highlight.js": "^11.10.0",
-    "element-plus": "^2.7.0"
+    "mermaid": "^11.0.0",
+    "pinia": "^2.1.0",
+    "vue": "^3.4.0",
+    "vue-i18n": "^10.0.7",
+    "vue-router": "^4.3.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",
