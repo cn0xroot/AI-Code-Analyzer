@@ -1,6 +1,8 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 from typing import Optional, List
 from datetime import datetime
+
+from app.schemas.analysis import as_utc
 
 
 class HistoryItem(BaseModel):
@@ -16,6 +18,10 @@ class HistoryItem(BaseModel):
     completed_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
+
+    @field_serializer("created_at", "completed_at")
+    def _utc(self, value: Optional[datetime]) -> Optional[datetime]:
+        return as_utc(value)
 
 
 class HistoryList(BaseModel):

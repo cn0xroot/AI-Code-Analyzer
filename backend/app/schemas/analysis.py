@@ -1,6 +1,12 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
+
+
+def as_utc(value: Optional[datetime]) -> Optional[datetime]:
+    if value is not None and value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value
 
 
 class AnalysisCreate(BaseModel):
@@ -40,6 +46,10 @@ class AnalysisTaskResponse(BaseModel):
     results: List[AnalysisResultItem] = []
 
     model_config = {"from_attributes": True}
+
+    @field_serializer("created_at", "completed_at")
+    def _utc(self, value: Optional[datetime]) -> Optional[datetime]:
+        return as_utc(value)
 
 
 class AnalysisStatusResponse(BaseModel):

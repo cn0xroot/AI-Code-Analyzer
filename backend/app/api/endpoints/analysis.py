@@ -89,6 +89,7 @@ async def get_analysis(task_id: int, db: Session = Depends(get_db)):
         ai_provider=task.ai_provider,
         ai_model=task.ai_model,
         ai_config_id=task.ai_config_id,
+        language=task.language,
         error_message=task.error_message,
         created_at=task.created_at,
         completed_at=task.completed_at,
