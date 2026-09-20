@@ -24,6 +24,19 @@ class ModelConfigResponse(BaseModel):
 
 class ModelConfigUpdate(BaseModel):
     name: Optional[str] = None
+    provider: Optional[str] = None
+    model_id: Optional[str] = None
     api_key: Optional[str] = None
     base_url: Optional[str] = None
     is_default: Optional[bool] = None
+
+
+class AvailableModelsRequest(BaseModel):
+    provider: str
+    api_key: Optional[str] = None
+    base_url: Optional[str] = None
+    config_id: Optional[int] = None
+
+
+class AvailableModelsResponse(BaseModel):
+    models: list[str]

@@ -3,7 +3,11 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.api.deps import get_db
-from app.schemas.model_config import ModelConfigCreate, ModelConfigResponse, ModelConfigUpdate
+from app.schemas.model_config import (
+    ModelConfigCreate, ModelConfigResponse, ModelConfigUpdate,
+    AvailableModelsRequest, AvailableModelsResponse,
+)
+from app.services.model_catalog import list_available_models, ModelCatalogError
 from app.models.model_config import AIModelConfig
 
 router = APIRouter(prefix="/models", tags=["model-config"])
@@ -27,6 +31,27 @@ async def create_model(config: ModelConfigCreate, db: Session = Depends(get_db))
     return model
 
 
+@router.post("/available", response_model=AvailableModelsResponse)
+async def available_models(request: AvailableModelsRequest, db: Session = Depends(get_db)):
+    """List model IDs offered by a provider, using a new key or a saved config's key."""
+    api_key = request.api_key
+    base_url = request.base_url
+    if request.config_id is not None:
+        saved = db.query(AIModelConfig).filter(AIModelConfig.id == request.config_id).first()
+        if not saved:
+            raise HTTPException(status_code=404, detail="Model config not found")
+        api_key = api_key or saved.api_key
+        if base_url is None:
+            base_url = saved.base_url
+    if not api_key:
+        raise HTTPException(status_code=400, detail="API key is required")
+    try:
+        models = await list_available_models(request.provider, api_key, base_url or None)
+    except ModelCatalogError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return AvailableModelsResponse(models=models)
+
+
 @router.get("/{config_id}", response_model=ModelConfigResponse)
 async def get_model(config_id: int, db: Session = Depends(get_db)):
     model = db.query(AIModelConfig).filter(AIModelConfig.id == config_id).first()
@@ -43,6 +68,8 @@ async def update_model(
     if not model:
         raise HTTPException(status_code=404, detail="Model config not found")
     update_data = updates.model_dump(exclude_unset=True)
+    if not update_data.get("api_key"):
+        update_data.pop("api_key", None)
     if update_data.get("is_default"):
         db.query(AIModelConfig).filter(AIModelConfig.is_default == True).update(
             {"is_default": False}

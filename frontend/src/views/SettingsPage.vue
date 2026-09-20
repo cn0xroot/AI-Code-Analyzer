@@ -33,6 +33,7 @@
           <div><dt>{{ t('settings.apiKey') }}</dt><dd class="mono muted">{{ maskKey(m.api_key) }}</dd></div>
         </dl>
         <div class="model-actions">
+          <el-button size="small" @click="openEdit(m)"><Icon name="edit" :size="16" />{{ t('settings.edit') }}</el-button>
           <el-button v-if="!m.is_default" size="small" text @click="setDefault(m)">{{ t('settings.setDefault') }}</el-button>
           <span class="grow"></span>
           <el-popconfirm :title="t('common.confirmDelete')" @confirm="handleDelete(m.id)">
@@ -44,7 +45,7 @@
       </div>
     </div>
 
-    <el-dialog v-model="showDialog" :title="t('settings.dialogTitle')" width="520px">
+    <el-dialog v-model="showDialog" :title="editingId ? t('settings.editTitle') : t('settings.dialogTitle')" width="520px" @closed="resetForm">
       <div class="dialog-form">
         <div class="field-block">
           <span class="field-label">{{ t('settings.provider') }}</span>
@@ -67,18 +68,42 @@
           <el-input v-model="form.name" :placeholder="t('settings.namePlaceholder')" />
         </label>
         <label class="field-block">
-          <span class="field-label">{{ t('settings.modelId') }} *</span>
-          <el-input v-model="form.model_id" :placeholder="t('settings.modelIdPlaceholder')" class="mono-input" />
-        </label>
-        <label class="field-block">
-          <span class="field-label">API Key *</span>
-          <el-input v-model="form.api_key" type="password" show-password placeholder="sk-..." class="mono-input" />
+          <span class="field-label">API Key {{ editingId ? '' : '*' }}</span>
+          <el-input
+            v-model="form.api_key"
+            type="password"
+            show-password
+            :placeholder="editingId ? t('settings.keyUnchanged') : 'sk-...'"
+            class="mono-input"
+          />
         </label>
         <label class="field-block">
           <span class="field-label">Base URL</span>
           <el-input v-model="form.base_url" :placeholder="t('settings.baseUrlPlaceholder')" class="mono-input" />
           <span class="field-hint">{{ t('settings.baseUrlTip') }}</span>
         </label>
+        <div class="field-block">
+          <span class="field-label">{{ t('settings.modelId') }} *</span>
+          <div class="model-id-row">
+            <el-select
+              v-model="form.model_id"
+              filterable
+              allow-create
+              default-first-option
+              :placeholder="t('settings.modelIdPlaceholder')"
+              class="mono-input model-select"
+              :no-data-text="t('settings.modelIdHint')"
+            >
+              <el-option v-for="id in availableModels" :key="id" :label="id" :value="id" />
+            </el-select>
+            <el-button :loading="fetching" :disabled="!canFetch" @click="fetchModels">
+              <Icon v-if="!fetching" name="refresh" :size="16" />{{ fetching ? t('settings.fetching') : t('settings.fetchModels') }}
+            </el-button>
+          </div>
+          <span class="field-hint" :class="{ 'is-error': fetchError, 'is-ok': !fetchError && availableModels.length }">
+            {{ fetchError || (availableModels.length ? t('settings.fetched', { count: availableModels.length }) : t('settings.modelIdHint')) }}
+          </span>
+        </div>
         <label class="switch-row">
           <el-switch v-model="form.is_default" />
           <span>{{ t('settings.setDefault') }}</span>
@@ -95,16 +120,21 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import Icon from '../components/Icon.vue'
 import { useConfigStore } from '../stores/config'
+import { fetchAvailableModels } from '../api/config'
 
 const { t, te } = useI18n()
 const configStore = useConfigStore()
 const showDialog = ref(false)
 const saving = ref(false)
+const editingId = ref(null)
+const fetching = ref(false)
+const fetchError = ref('')
+const availableModels = ref([])
 
 const providerIds = ['openai', 'anthropic', 'tongyi', 'openai_compat']
 
@@ -121,28 +151,90 @@ function providerLabel(p) {
   return te(`settings.providerShort.${p}`) ? t(`settings.providerShort.${p}`) : p
 }
 
+const canFetch = computed(() => Boolean(form.api_key || editingId.value) && (form.provider !== 'openai_compat' || Boolean(form.base_url)))
+
+function resetForm() {
+  editingId.value = null
+  availableModels.value = []
+  fetchError.value = ''
+  Object.assign(form, {
+    name: '', provider: 'openai', model_id: '', api_key: '', base_url: '', is_default: false,
+  })
+}
+
+function openEdit(m) {
+  editingId.value = m.id
+  availableModels.value = []
+  fetchError.value = ''
+  Object.assign(form, {
+    name: m.name,
+    provider: m.provider,
+    model_id: m.model_id,
+    api_key: '',
+    base_url: m.base_url || '',
+    is_default: m.is_default,
+  })
+  showDialog.value = true
+}
+
+async function fetchModels() {
+  if (!canFetch.value) {
+    ElMessage.warning(t('settings.keyRequiredForFetch'))
+    return
+  }
+  fetching.value = true
+  fetchError.value = ''
+  try {
+    const { data } = await fetchAvailableModels({
+      provider: form.provider,
+      api_key: form.api_key || undefined,
+      base_url: form.base_url || undefined,
+      config_id: editingId.value || undefined,
+    })
+    availableModels.value = data.models
+    if (form.model_id && !data.models.includes(form.model_id)) {
+      availableModels.value = [form.model_id, ...data.models]
+    }
+  } catch (err) {
+    fetchError.value = t('settings.fetchFailed') + (err.response?.data?.detail || err.message)
+    availableModels.value = []
+  } finally {
+    fetching.value = false
+  }
+}
+
 function maskKey(key) {
   return key ? `${key.slice(0, 3)}••••••••${key.slice(-4)}` : 'sk-••••••••'
 }
 
 async function handleSave() {
-  if (!form.name || !form.model_id || !form.api_key) {
+  if (!form.name || !form.model_id || (!editingId.value && !form.api_key)) {
     ElMessage.warning(t('settings.fillRequired'))
     return
   }
   saving.value = true
   try {
-    await configStore.addModel({
-      ...form,
-      base_url: form.base_url || undefined,
-    })
-    ElMessage.success(t('settings.addSuccess'))
+    if (editingId.value) {
+      await configStore.editModel(editingId.value, {
+        name: form.name,
+        provider: form.provider,
+        model_id: form.model_id,
+        api_key: form.api_key || undefined,
+        base_url: form.base_url || null,
+        is_default: form.is_default,
+      })
+      if (form.is_default) await configStore.fetchModels()
+      ElMessage.success(t('settings.updateSuccess'))
+    } else {
+      await configStore.addModel({
+        ...form,
+        base_url: form.base_url || undefined,
+      })
+      ElMessage.success(t('settings.addSuccess'))
+    }
     showDialog.value = false
-    Object.assign(form, {
-      name: '', provider: 'openai', model_id: '', api_key: '', base_url: '', is_default: false,
-    })
   } catch (err) {
-    ElMessage.error(t('settings.addFailed') + (err.response?.data?.detail || err.message))
+    ElMessage.error(t(editingId.value ? 'settings.updateFailed' : 'settings.addFailed') + (err.response?.data?.detail || err.message))
   } finally {
     saving.value = false
   }
@@ -271,6 +363,11 @@ onMounted(() => {
 .field-block { display: flex; flex-direction: column; gap: 8px; }
 .field-label { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
 .field-hint { font-size: 12px; line-height: 1.5; color: var(--text-muted); }
+.field-hint.is-error { color: var(--danger); }
+.field-hint.is-ok { color: var(--accent); }
+.model-id-row { display: flex; gap: 8px; }
+.model-select { flex: 1; min-width: 0; }
+.model-select :deep(.el-select__selected-item), .model-select :deep(.el-select__input) { font-family: var(--font-mono); font-size: 13px; }
 .mono-input :deep(.el-input__inner) { font-family: var(--font-mono); font-size: 13px; }
 
 .provider-grid {

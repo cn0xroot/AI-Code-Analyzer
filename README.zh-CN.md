@@ -222,7 +222,8 @@ Code_AI_ant/
 | GET | /api/v1/analysis/{id}/stream | SSE 流式 AI 输出 |
 | GET | /api/v1/models/ | 列出 AI 模型配置 |
 | POST | /api/v1/models/ | 添加 AI 模型配置 |
-| PUT | /api/v1/models/{id} | 更新 AI 模型配置 |
+| PUT | /api/v1/models/{id} | 更新 AI 模型配置（api_key 留空则保持不变） |
+| POST | /api/v1/models/available | 从提供商拉取可用模型列表（同时校验 Key） |
 | DELETE | /api/v1/models/{id} | 删除 AI 模型配置 |
 | GET | /api/v1/history/ | 分析历史（分页） |
 | DELETE | /api/v1/history/{id} | 删除历史记录 |

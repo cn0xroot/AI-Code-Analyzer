@@ -224,7 +224,8 @@ AI-Code-Analyzer/
 | GET | /api/v1/analysis/{id}/stream | SSE streaming AI output |
 | GET | /api/v1/models/ | List AI model configurations |
 | POST | /api/v1/models/ | Add AI model configuration |
-| PUT | /api/v1/models/{id} | Update AI model configuration |
+| PUT | /api/v1/models/{id} | Update AI model configuration (blank api_key keeps the current key) |
+| POST | /api/v1/models/available | List model IDs offered by a provider (validates the key) |
 | DELETE | /api/v1/models/{id} | Delete AI model configuration |
 | GET | /api/v1/history/ | Analysis history (paginated) |
 | DELETE | /api/v1/history/{id} | Delete history record |

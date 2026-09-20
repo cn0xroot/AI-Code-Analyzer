@@ -7,3 +7,5 @@ export const createModel = (data) => api.post('/models/', data)
 export const updateModel = (id, data) => api.put(`/models/${id}`, data)
 
 export const deleteModel = (id) => api.delete(`/models/${id}`)
+
+export const fetchAvailableModels = (data) => api.post('/models/available', data)
