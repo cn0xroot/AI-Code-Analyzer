@@ -28,6 +28,64 @@
 | 图表渲染 | Mermaid.js + marked (Markdown) + highlight.js |
 | 实时通信 | SSE (Server-Sent Events) |
 
+## 环境要求与依赖
+
+### 系统要求
+
+| 软件 | 版本 | 用途 |
+|------|------|------|
+| Python | 3.10+（已在 3.13 测试） | 后端运行时 |
+| Node.js | 18+（已在 22 测试） | 前端构建与开发服务器 |
+| npm | 9+ | 前端包管理 |
+| Git | 2.x | 克隆远程仓库 |
+
+### 后端 Python 包（`backend/requirements.txt`）
+
+| 包 | 用途 |
+|----|------|
+| fastapi | Web 框架 |
+| uvicorn[standard] | ASGI 服务器（支持热重载） |
+| sqlalchemy | ORM / SQLite 持久化 |
+| pydantic-settings | `.env` 配置加载 |
+| python-multipart | 文件上传支持 |
+| gitpython | Git 仓库克隆 |
+| tree-sitter | AST 解析引擎 |
+| tree-sitter-language-pack | 305+ 语言语法包 |
+| openai | OpenAI / 通义千问 / OpenAI 兼容提供商 |
+| anthropic | Anthropic (Claude) 提供商 |
+| python-dotenv | `.env` 文件支持 |
+| httpx[socks] | AI SDK 请求的 SOCKS 代理支持（若设置了 `all_proxy=socks5://...` 则必需） |
+
+一键安装：
+
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 前端 npm 包（`frontend/package.json`）
+
+| 包 | 用途 |
+|----|------|
+| vue | UI 框架 |
+| vue-router | 前端路由 |
+| pinia | 状态管理 |
+| axios | HTTP 客户端 |
+| element-plus | UI 组件库 |
+| mermaid | 图表渲染 |
+| highlight.js | 代码语法高亮 |
+| vite | 构建工具与开发服务器（dev） |
+| @vitejs/plugin-vue | Vite 的 Vue SFC 支持（dev） |
+
+一键安装：
+
+```bash
+cd frontend
+npm install
+```
+
 ## 快速开始
 
 ### 1. 安装后端依赖

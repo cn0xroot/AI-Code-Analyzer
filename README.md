@@ -30,6 +30,64 @@ An intelligent code analysis system powered by AI large language models that aut
 | Visualization | Mermaid.js + marked (Markdown) + highlight.js |
 | Real-Time | SSE (Server-Sent Events) |
 
+## Prerequisites & Dependencies
+
+### System Requirements
+
+| Software | Version | Purpose |
+|----------|---------|---------|
+| Python | 3.10+ (tested on 3.13) | Backend runtime |
+| Node.js | 18+ (tested on 22) | Frontend build & dev server |
+| npm | 9+ | Frontend package manager |
+| Git | 2.x | Cloning remote repositories |
+
+### Backend Python Packages (`backend/requirements.txt`)
+
+| Package | Purpose |
+|---------|---------|
+| fastapi | Web framework |
+| uvicorn[standard] | ASGI server (with hot reload) |
+| sqlalchemy | ORM / SQLite persistence |
+| pydantic-settings | `.env` configuration loading |
+| python-multipart | File upload support |
+| gitpython | Git repository cloning |
+| tree-sitter | AST parsing engine |
+| tree-sitter-language-pack | Grammars for 305+ languages |
+| openai | OpenAI / Qwen / OpenAI-compatible providers |
+| anthropic | Anthropic (Claude) provider |
+| python-dotenv | `.env` file support |
+| httpx[socks] | SOCKS proxy support for AI SDK requests (required if `all_proxy=socks5://...` is set) |
+
+Install all at once:
+
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### Frontend npm Packages (`frontend/package.json`)
+
+| Package | Purpose |
+|---------|---------|
+| vue | UI framework |
+| vue-router | Client-side routing |
+| pinia | State management |
+| axios | HTTP client |
+| element-plus | UI component library |
+| mermaid | Diagram rendering |
+| highlight.js | Code syntax highlighting |
+| vite | Build tool & dev server (dev) |
+| @vitejs/plugin-vue | Vue SFC support for Vite (dev) |
+
+Install all at once:
+
+```bash
+cd frontend
+npm install
+```
+
 ## Quick Start
 
 ### 1. Install Backend Dependencies
