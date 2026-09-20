@@ -19,6 +19,22 @@ An intelligent code analysis system powered by AI large language models that aut
 - **Analysis History**: SQLite persistence with support for viewing results, re-analysis, and record deletion
 - **Fault Tolerance**: Task timeout detection, automatic zombie task recovery on server restart, polling with retry
 
+## Screenshots
+
+| Home | Analyze |
+|------|---------|
+| ![Home](docs/screenshots/en/home.png) | ![Analyze](docs/screenshots/en/analyze.png) |
+
+| Live analysis (streaming) | Result with diagrams and AI chat |
+|---------------------------|----------------------------------|
+| ![Analyzing](docs/screenshots/en/analyzing.png) | ![Result](docs/screenshots/en/result.png) |
+
+| History | Models |
+|---------|--------|
+| ![History](docs/screenshots/en/history.png) | ![Models](docs/screenshots/en/models.png) |
+
+The UI ships in English and Chinese; Chinese screenshots are in [README.zh-CN.md](README.zh-CN.md#界面预览).
+
 ## Technology Stack
 
 | Layer | Technologies |
@@ -323,6 +339,10 @@ npm run build
 cd backend
 uvicorn app.main:app --port 8000
 ```
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release notes.
 
 ## Contributing
 

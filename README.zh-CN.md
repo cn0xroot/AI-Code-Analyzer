@@ -17,6 +17,22 @@
 - **分析历史**: SQLite 持久化存储，支持查看结果、重新分析、删除记录
 - **容错机制**: 任务超时检测、服务器重启自动恢复僵尸任务、轮询失败重试
 
+## 界面预览
+
+| 首页 | 代码分析 |
+|------|----------|
+| ![首页](docs/screenshots/zh/home.png) | ![代码分析](docs/screenshots/zh/analyze.png) |
+
+| 分析进行中（实时流式输出） | 分析结果（图表 + AI 对话） |
+|----------------------------|----------------------------|
+| ![分析中](docs/screenshots/zh/analyzing.png) | ![分析结果](docs/screenshots/zh/result.png) |
+
+| 历史记录 | 模型配置 |
+|----------|----------|
+| ![历史记录](docs/screenshots/zh/history.png) | ![模型配置](docs/screenshots/zh/models.png) |
+
+界面支持中英文切换，英文截图见 [README.md](README.md#screenshots)。
+
 ## 技术栈
 
 | 层级 | 技术 |
@@ -263,6 +279,10 @@ Code_AI_ant/
 | rose | 玫瑰 | 深色 | 粉红 #ec4899 |
 | nord | Nord | 深色 | 冰蓝 #88c0d0 |
 | light | 浅色 | 亮色 | 靛蓝 #6366f1 |
+
+## 更新日志
+
+版本变更记录见 [CHANGELOG.zh-CN.md](CHANGELOG.zh-CN.md)。
 
 ## 分析维度说明
 

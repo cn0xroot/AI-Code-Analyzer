@@ -59,7 +59,7 @@
         </div>
       </el-popover>
 
-      <div class="version mono">v1.0.0</div>
+      <div class="version mono">v{{ appVersion }}</div>
     </div>
   </aside>
 </template>
@@ -69,6 +69,8 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Icon from './Icon.vue'
 import { setLocale } from '../i18n'
+
+const appVersion = __APP_VERSION__
 
 defineProps({
   theme: { type: String, default: 'midnight' },

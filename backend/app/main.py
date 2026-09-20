@@ -17,7 +17,7 @@ with engine.connect() as conn:
         conn.exec_driver_sql("ALTER TABLE analysis_tasks ADD COLUMN language VARCHAR(10) DEFAULT 'zh'")
         conn.commit()
 
-app = FastAPI(title=settings.APP_NAME, version="1.0.0")
+app = FastAPI(title=settings.APP_NAME, version="1.1.0")
 
 app.add_middleware(
     CORSMiddleware,
